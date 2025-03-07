@@ -4,3 +4,4 @@ models
 embeddings
 __pycache__
 plots
+attendance.csv
