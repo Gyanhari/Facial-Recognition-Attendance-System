@@ -15,6 +15,7 @@ from psycopg2 import Error
 from datetime import datetime
 import time
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from facial_recognition.src.train_model import prepare_training_data, train_classifier
 from facial_recognition.src.populate_databse import populate_students
 import torch.nn as nn
 import pandas as pd
@@ -520,6 +521,44 @@ def attendance():
 
     return render_template('attendance.html', periods=periods, selected_period_id=selected_period_id, course_name=course_name)
 
+@app.route('/train', methods=['GET', 'POST'])
+def train():
+    if request.method == 'POST':
+        aligned_dir = os.path.join('facial_recognition', 'dataset', 'aligned')
+        embeddings_dir = os.path.join('facial_recognition', 'embeddings')
+        models_dir = os.path.join('facial_recognition', 'models')
+        plots_dir = os.path.join('facial_recognition', 'plots')
+
+        # Ensure directories exist
+        os.makedirs(embeddings_dir, exist_ok=True)
+        os.makedirs(models_dir, exist_ok=True)
+        os.makedirs(plots_dir, exist_ok=True)
+
+        try:
+            # Prepare training data
+            logging.info("Preparing training data...")
+            X_train, y_train, X_val, y_val, num_classes = prepare_training_data(aligned_dir, embeddings_dir)
+
+            # Train the classifier
+            logging.info("Starting model training...")
+            train_loss_history, val_loss_history, train_accuracy_history, val_accuracy_history = train_classifier(
+                X_train, y_train, X_val, y_val, num_classes, epochs=100
+            )
+
+            # Update the classifier in the global scope (for use in mark_attendance_route)
+            global classifier
+            classifier = Classifier(num_classes).to(device)
+            classifier.load_state_dict(torch.load(os.path.join(models_dir, 'best_classifier.pth')))
+            classifier.eval()
+
+            flash(f"Training completed successfully. Model saved. Plots generated in {plots_dir}.", "success")
+            return redirect(url_for('train'))
+        except Exception as e:
+            logging.error(f"Error during training: {e}")
+            flash(f"Error during training: {str(e)}", "error")
+            return redirect(url_for('train'))
+
+    return render_template('train.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

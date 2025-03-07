@@ -1,0 +1,20 @@
+{% extends "index.html" %} {% block content %}
+<h2>Train Model</h2>
+<div id="message">
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+</div>
+<form method="post">
+  <button type="submit">Train Model</button>
+</form>
+{% if not messages %}
+<p>
+  Click the button above to start training the facial recognition model using
+  the aligned dataset.
+</p>
+<p>
+  Training may take several minutes depending on the dataset size and hardware.
+</p>
+{% endif %} {% endblock %}
