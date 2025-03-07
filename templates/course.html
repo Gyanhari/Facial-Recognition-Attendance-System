@@ -1,0 +1,67 @@
+{% extends "index.html" %} {% block content %}
+<h2>Add Course or Class Period</h2>
+<form action="{{ url_for('course') }}" method="post">
+  <label for="course_option">Course Option:</label>
+  <select
+    id="course_option"
+    name="course_option"
+    required
+    onchange="toggleCourseName()"
+  >
+    <option value="">-- Select a Course --</option>
+    <option value="new">Add New Course</option>
+    {% for course in courses %}
+    <option value="{{ course[0] }}">{{ course[1] }}</option>
+    {% endfor %}
+  </select>
+
+  <div id="new_course_field" style="display: none">
+    <label for="course_name">New Course Name:</label>
+    <input
+      type="text"
+      id="course_name"
+      name="course_name"
+      placeholder="Enter course name"
+    />
+  </div>
+
+  <label for="period_date">Date:</label>
+  <input type="date" id="period_date" name="period_date" required />
+
+  <label for="start_time">Start Time:</label>
+  <input type="time" id="start_time" name="start_time" required />
+
+  <label for="duration">Duration (minutes):</label>
+  <input
+    type="number"
+    id="duration"
+    name="duration"
+    min="45"
+    max="90"
+    required
+    placeholder="Enter duration (45-90 min)"
+    title="Duration must be between 45 and 90 minutes"
+  />
+  <small>Enter a value between 45 and 90 minutes.</small>
+
+  <button type="submit">Add Class Period</button>
+</form>
+
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%} {% for category, message in messages %}
+<div class="flash {{ category }}">{{ message }}</div>
+{% endfor %} {% endif %} {% endwith %}
+
+<script>
+  function toggleCourseName() {
+    const courseOption = document.getElementById("course_option").value;
+    const newCourseField = document.getElementById("new_course_field");
+    const courseNameInput = document.getElementById("course_name");
+    newCourseField.style.display = courseOption === "new" ? "block" : "none";
+    // Make course_name required only when adding a new course
+    courseNameInput.required = courseOption === "new";
+  }
+  // Initialize the toggle based on the default selected option
+  toggleCourseName();
+</script>
+{% endblock %}

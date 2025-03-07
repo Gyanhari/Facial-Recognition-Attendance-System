@@ -1,0 +1,16 @@
+torch==1.13.0  # or `torch==1.13.0+cu11` for GPU
+opencv-python==4.6.0.66
+mtcnn==0.1.0
+numpy
+pillow==9.0.1
+scipy==1.8.0
+imageio==2.16.0
+facenet-pytorch==2.5.2
+tqdm
+pandas
+matplotlib
+scikit-learn
+flask
+flask-cors
+torchvision
+psycopg2
