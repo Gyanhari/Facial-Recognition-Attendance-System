@@ -2,60 +2,42 @@
 {% block content %}
 <h2>Attendance</h2>
 
-<div id="attendance-subject">
-    {% if course_name %}
-    <p>Attendance for <strong>{{ course_name }}</strong></p>
-    {% else %}
-    <p>Attendance for <strong>Please select a period</strong></p>
-    {% endif %}
-</div>
+<!-- Generic message until View Attendance is clicked -->
+
 
 <form id="attendance-form">
-  <label for="period_id">Select Period:</label>
-  <select id="period_id" name="period_id" required>
-    {% for period in periods %}
-    <option value="{{ period[0] }}" {% if period[0] == selected_period_id %}selected{% endif %}>
-      {{ period[1] }} - {{ period[2] }} {{ period[3] }}
-    </option>
-    {% endfor %}
-  </select>
-  <button type="button" id="trigger-attendance">Trigger Attendance</button>
-  <button type="button" id="view-attendance">View Attendance</button>
+    <label for="period_id">Select Period:</label>
+    <select id="period_id" name="period_id" required>
+        {% for period in periods %}
+        <option value="{{ period[0] }}" {% if period[0] == selected_period_id %}selected{% endif %}>
+            {{ period[1] }} - {{ period[2] }} {{ period[3] }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="button" id="trigger-attendance">Trigger Attendance</button>
+    <button type="button" id="view-attendance">View Attendance</button>
 </form>
 
 <div id="attendance-records">
-    {% if course_name %}
-    <h3>Attendance Record For {{ course_name }}</h3>
-    {% endif %}
-  <table id="attendance-table" style="display: {% if not course_name %}none{% endif %};">
-    <tr>
-      <th>First Name</th>
-      <th>Middle Name</th>
-      <th>Last Name</th>
-      <th>Roll No</th>
-      <th>Status</th>
-      <th>Timestamp</th>
-    </tr>
-    {% if records %}
-    {% for record in records %}
-    <tr>
-      <td>{{ record[0] }}</td>
-      <td>{{ record[1] if record[1] else '' }}</td>
-      <td>{{ record[2] }}</td>
-      <td>{{ record[3] }}</td>
-      <td>{{ record[4] }}</td>
-      <td>{{ record[5] }}</td>
-    </tr>
-    {% endfor %}
-    {% endif %}
-  </table>
-  <div id="message"></div>
+    <h3 id="attendance-heading">Attendance Record</h3>
+    <table id="attendance-table" style="display: none;">
+        <tr>
+            <th>First Name</th>
+            <th>Middle Name</th>
+            <th>Last Name</th>
+            <th>Roll No</th>
+            <th>Status</th>
+            <th>Timestamp</th>
+        </tr>
+    </table>
+    <div id="message"></div>
 </div>
 
 <!-- Include jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Trigger Attendance with AJAX (unchanged)
     $('#trigger-attendance').on('click', function() {
         var period_id = $('#period_id').val();
         if (!period_id) {
@@ -83,6 +65,7 @@ $(document).ready(function() {
         });
     });
 
+    // View Attendance with AJAX (updated to set subject and date)
     $('#view-attendance').on('click', function() {
         var period_id = $('#period_id').val();
         if (!period_id) {
@@ -97,7 +80,7 @@ $(document).ready(function() {
             success: function(data) {
                 $('#attendance-table').empty();
                 if (data.records.length > 0) {
-                    $('#attendance-records h3').text('Attendance Record For ' + data.course_name);
+                    $('#attendance-heading').text('Attendance Record For ' + data.course_name + ' on ' + data.date);
                     $('#attendance-table').show();
                     var headerRow = '<tr><th>First Name</th><th>Middle Name</th><th>Last Name</th><th>Roll No</th><th>Status</th><th>Timestamp</th></tr>';
                     $('#attendance-table').append(headerRow);
@@ -114,11 +97,12 @@ $(document).ready(function() {
                     });
                     $('#message').text('').removeClass('error');
                 } else {
-                    $('#attendance-records h3').text('Attendance Record For ' + data.course_name);
+                    $('#attendance-heading').text('Attendance Record For ' + data.course_name + ' on ' + data.date);
                     $('#attendance-table').hide();
                     $('#message').text('No attendance records found.').removeClass('error');
                 }
-                $('#attendance-subject p').html('Attendance for <strong>' + data.course_name + '</strong>');
+                // Update the subject and date display only on View Attendance click
+                $('#attendance-subject p').html('Attendance for <strong>' + data.course_name + '</strong> on <strong>' + data.date + '</strong>');
             },
             error: function(xhr, status, error) {
                 $('#message').text('Error fetching attendance: ' + error).addClass('error');
@@ -127,23 +111,8 @@ $(document).ready(function() {
         });
     });
 
-    $('#period_id').on('change', function() {
-        var period_id = $(this).val();
-        if (period_id) {
-            $.ajax({
-                url: '/get_attendance/' + period_id,
-                type: 'GET',
-                dataType: 'json',
-                success: function(data) {
-                    $('#attendance-subject p').html('Attendance for <strong>' + data.course_name + '</strong>');
-                },
-                error: function(xhr, status, error) {
-                    $('#attendance-subject p').html('Attendance for <strong>Error fetching subject</strong>');
-                    console.log('Error:', error);
-                }
-            });
-        }
-    });
+    // Remove the change event handler for period_id to avoid updating subject and date
+    // $('#period_id').on('change', function() { ... }); // Commented out
 });
 </script>
 

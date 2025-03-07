@@ -1,4 +1,3 @@
-# facial_recognition/src/train_model.py
 import matplotlib
 matplotlib.use('Agg')  # Use Agg backend (non-GUI)
 
@@ -111,7 +110,7 @@ class Classifier(nn.Module):
         return self.fc(x)
 
 # Train the classifier
-def train_classifier(X_train, y_train, X_val, y_val, num_classes, epochs=50, batch_size=32, lr=0.001, patience=10):
+def train_classifier(X_train, y_train, X_val, y_val, num_classes, epochs=50, batch_size=32, lr=0.001, patience=10, models_dir='facial_recognition/models', plots_dir='facial_recognition/plots'):
     classifier = Classifier(num_classes).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(classifier.parameters(), lr=lr)
@@ -191,9 +190,9 @@ def train_classifier(X_train, y_train, X_val, y_val, num_classes, epochs=50, bat
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0
-            os.makedirs('facial_recognition/models', exist_ok=True)
-            torch.save(classifier.state_dict(), 'facial_recognition/models/best_classifier.pth')
-            logging.info("Saved best model checkpoint.")
+            os.makedirs(models_dir, exist_ok=True)
+            torch.save(classifier.state_dict(), os.path.join(models_dir, 'best_classifier.pth'))
+            logging.info(f"Saved best model checkpoint to {models_dir}.")
         else:
             patience_counter += 1
             if patience_counter >= patience:
@@ -201,6 +200,7 @@ def train_classifier(X_train, y_train, X_val, y_val, num_classes, epochs=50, bat
                 break
 
     # Save loss and accuracy plots
+    os.makedirs(plots_dir, exist_ok=True)
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, len(train_loss_history) + 1), train_loss_history, label='Training Loss', marker='o')
     plt.plot(range(1, len(val_loss_history) + 1), val_loss_history, label='Validation Loss', marker='o', color='orange')
@@ -209,7 +209,7 @@ def train_classifier(X_train, y_train, X_val, y_val, num_classes, epochs=50, bat
     plt.title('Training and Validation Loss Over Epochs')
     plt.legend()
     plt.grid()
-    plt.savefig('facial_recognition/plots/loss_plot.png')
+    plt.savefig(os.path.join(plots_dir, 'loss_plot.png'))
     plt.close()
 
     plt.figure(figsize=(10, 5))
@@ -220,9 +220,10 @@ def train_classifier(X_train, y_train, X_val, y_val, num_classes, epochs=50, bat
     plt.title('Training and Validation Accuracy Over Epochs')
     plt.legend()
     plt.grid()
-    plt.savefig('facial_recognition/plots/accuracy_plot.png')
+    plt.savefig(os.path.join(plots_dir, 'accuracy_plot.png'))
     plt.close()
 
+    logging.info(f"Saved training plots to {plots_dir}.")
     return train_loss_history, val_loss_history, train_accuracy_history, val_accuracy_history
 
 # Prepare data function

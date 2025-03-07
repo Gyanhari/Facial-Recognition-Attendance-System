@@ -1,22 +1,19 @@
 import os
 import cv2
 import time
-import random
 import numpy as np
 import torch
 from PIL import Image
 import imageio
 from facenet_pytorch import MTCNN, InceptionResnetV1
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from facial_recognition.src.helper import get_dataset, check_rollno_in_aligned
 from facial_recognition.src.align_dataset import align_images
-import psycopg2
-from psycopg2 import Error
-from datetime import datetime
-import time
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from facial_recognition.src.train_model import prepare_training_data, train_classifier
 from facial_recognition.src.populate_databse import populate_students
+import psycopg2
+from psycopg2 import Error
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import torch.nn as nn
 import pandas as pd
 import logging
@@ -42,6 +39,9 @@ RAW_DATA_PATH = os.path.join('facial_recognition', 'dataset', 'raw')
 ALIGNED_DATA_PATH = os.path.join('facial_recognition', 'dataset', 'aligned')
 FAILED_DATA_PATH = os.path.join('facial_recognition', 'dataset', 'failed')
 UPLOADED_USERS_FILE = 'uploaded_users.txt'
+EMBEDDINGS_DIR = os.path.join('facial_recognition', 'embeddings')
+MODELS_DIR = os.path.join('facial_recognition', 'models')
+PLOTS_DIR = os.path.join('facial_recognition', 'plots')
 
 # FaceNet and MTCNN setup
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -64,25 +64,28 @@ class Classifier(nn.Module):
     def forward(self, x):
         return self.fc(x)
 
-# Load class names and classifier
-embeddings_dir = 'facial_recognition/embeddings'
+# Global classifier instance (updated during training)
+classifier = None
+class_names = []  # Initialize as an empty list
+num_classes = 0
+
+# Load initial classifier and class names
 try:
-    with open(os.path.join(embeddings_dir, 'label_encoder.pkl'), 'rb') as f:
+    with open(os.path.join(EMBEDDINGS_DIR, 'label_encoder.pkl'), 'rb') as f:
         le = pickle.load(f)
-    class_names = le.classes_
+    class_names = list(le.classes_)  # Convert to list to avoid NumPy array issues
     num_classes = len(class_names)
     classifier = Classifier(num_classes).to(device)
-    classifier.load_state_dict(torch.load('facial_recognition/models/best_classifier.pth', map_location=device))
+    classifier.load_state_dict(torch.load(os.path.join(MODELS_DIR, 'best_classifier.pth'), map_location=device))
     classifier.eval()
+    logging.info(f"Loaded classifier with {num_classes} classes: {class_names}")
 except Exception as e:
-    logging.error(f"Error loading classifier or label encoder: {e}")
-    class_names = []
-    classifier = None
+    logging.error(f"Error loading initial classifier or label encoder: {e}")
 
 config = {
-    "input_dir": "facial_recognition/dataset/raw",
-    "output_dir": "facial_recognition/dataset/aligned",
-    "failed_dir": "facial_recognition/dataset/failed",
+    "input_dir": RAW_DATA_PATH,
+    "output_dir": ALIGNED_DATA_PATH,
+    "failed_dir": FAILED_DATA_PATH,
     "image_size": 182,
     "crop_size": 160,
     "margin": 44,
@@ -96,14 +99,14 @@ def get_db_connection():
     try:
         return psycopg2.connect(**DB_CONFIG)
     except Error as e:
-        print(f"Error connecting to database: {e}")
+        logging.error(f"Error connecting to database: {e}")
         return None
 
 def load_uploaded_users():
     uploaded_users = set()
     if os.path.exists(UPLOADED_USERS_FILE):
         with open(UPLOADED_USERS_FILE, 'r') as file:
-            uploaded_users = set(line.strip() for line in file if line.strip())
+            uploaded_users = {line.strip() for line in file if line.strip()}
     return uploaded_users
 
 def save_uploaded_user(rollno):
@@ -114,19 +117,21 @@ def get_periods():
     connection = get_db_connection()
     periods = []
     if connection:
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time
-            FROM Class_Periods cp
-            JOIN Courses c ON cp.course_id = c.course_id
-            ORDER BY cp.period_date, cp.start_time
-        """)
-        periods = cursor.fetchall()
-        cursor.close()
-        connection.close()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time
+                    FROM Class_Periods cp
+                    JOIN Courses c ON cp.course_id = c.course_id
+                    ORDER BY cp.period_date, cp.start_time
+                """)
+                periods = cursor.fetchall()
+        finally:
+            connection.close()
     return periods
 
 def recognize_face(face_tensor):
+    global classifier
     if classifier is None:
         logging.error("Classifier not loaded.")
         return None, 0.0
@@ -140,42 +145,101 @@ def recognize_face(face_tensor):
 
 def mark_attendance(student_id, period_id, connection, is_within_time_limit):
     try:
-        cursor = connection.cursor()
-        cursor.execute("SELECT status FROM Attendance WHERE student_id = %s AND period_id = %s", (student_id, period_id))
-        existing_status = cursor.fetchone()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT status FROM Attendance WHERE student_id = %s AND period_id = %s", (student_id, period_id))
+            existing_status = cursor.fetchone()
 
-        if not existing_status:
-            status = 'present' if is_within_time_limit else 'absent'
-            cursor.execute(
-                """
-                INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
-                VALUES (%s, %s, %s, NOW())
-                ON CONFLICT (student_id, period_id) DO NOTHING
-                """,
-                (student_id, period_id, status)
-            )
-            connection.commit()
-            logging.info(f"Successfully marked student ID {student_id} as {status} for period {period_id}")
-            flash(f"Marked student ID {student_id} as {status}", "success")
-        else:
-            logging.info(f"Student ID {student_id} already marked with status {existing_status[0]} for period {period_id}")
-
+            if not existing_status:
+                status = 'present' if is_within_time_limit else 'absent'
+                cursor.execute(
+                    """
+                    INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
+                    VALUES (%s, %s, %s, NOW())
+                    ON CONFLICT (student_id, period_id) DO NOTHING
+                    """,
+                    (student_id, period_id, status)
+                )
+                connection.commit()
+                logging.info(f"Successfully marked student ID {student_id} as {status} for period {period_id}")
+                flash(f"Marked student ID {student_id} as {status}", "success")
+            else:
+                logging.info(f"Student ID {student_id} already marked with status {existing_status[0]} for period {period_id}")
     except Exception as e:
         logging.error(f"Error marking attendance for student ID {student_id}: {e}")
         connection.rollback()
-    finally:
-        cursor.close()
 
-
-@app.route('/mark_attendance/<int:period_id>', methods=['POST'])  # Change to POST for AJAX
+@app.route('/mark_attendance/<int:period_id>', methods=['POST'])
 def mark_attendance_route(period_id):
-    if classifier is None or (class_names is None or len(class_names) == 0):
+    global classifier, class_names, num_classes
+    if classifier is None or len(class_names) == 0 or num_classes == 0:
+        logging.error("Facial recognition models not loaded or class names empty.")
         return jsonify({"status": "error", "message": "Facial recognition models not loaded or class names empty."}), 500
 
     connection = get_db_connection()
     if not connection:
         return jsonify({"status": "error", "message": "Error connecting to database."}), 500
 
+    # Check if the period has ended
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT period_date, start_time, duration
+            FROM Class_Periods
+            WHERE period_id = %s
+            """,
+            (period_id,)
+        )
+        period_info = cursor.fetchone()
+
+    if not period_info:
+        connection.close()
+        return jsonify({"status": "error", "message": "Invalid period_id"}), 404
+
+    period_date, start_time, duration = period_info
+    period_start = datetime.combine(period_date, start_time)
+    period_end = period_start + timedelta(minutes=duration)
+    current_time = datetime.now()
+
+    if current_time > period_end:
+        logging.info(f"Period {period_id} has ended at {period_end}. Marking all unmarked students as absent.")
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute("SELECT student_id FROM Students")
+                all_students = {row[0] for row in cursor.fetchall()}
+                cursor.execute("SELECT student_id FROM Attendance WHERE period_id = %s", (period_id,))
+                marked_students = {row[0] for row in cursor.fetchall()}
+                unmarked_students = all_students - marked_students
+
+                if unmarked_students:
+                    cursor.executemany(
+                        """
+                        INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
+                        VALUES (%s, %s, 'absent', NOW())
+                        ON CONFLICT (student_id, period_id) DO NOTHING
+                        """,
+                        [(student_id, period_id) for student_id in unmarked_students]
+                    )
+                    connection.commit()
+                    logging.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
+                    absent_message = f"Marked {len(unmarked_students)} students as absent due to period end."
+                else:
+                    logging.info(f"No unmarked students to mark as absent for period {period_id}")
+                    absent_message = "No unmarked students to mark as absent."
+            except Exception as e:
+                logging.error(f"Error marking absent students: {e}")
+                connection.rollback()
+                connection.close()
+                return jsonify({"status": "error", "message": f"Error marking absent students: {str(e)}"}), 500
+
+        connection.close()
+        return jsonify({
+            "status": "success",
+            "message": "Attendance marking completed (period ended).",
+            "absent_message": absent_message,
+            "recognized_count": 0
+        })
+
+    # Proceed with live attendance if period is active
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         connection.close()
@@ -199,104 +263,98 @@ def mark_attendance_route(period_id):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         boxes, _ = mtcnn.detect(frame_rgb)
 
-        if boxes is not None:
+        if boxes is not None and len(boxes) > 0:
             for box in boxes:
                 x1, y1, x2, y2 = [int(coord) for coord in box]
-                x1 = max(0, x1)
-                y1 = max(0, y1)
-                x2 = min(frame.shape[1], x2)
-                y2 = min(frame.shape[0], y2)
+                x1, y1 = max(0, x1), max(0, y1)
+                x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
 
                 face = frame_rgb[y1:y2, x1:x2]
+                if face.size == 0 or face.shape[0] <= 0 or face.shape[1] <= 0:
+                    continue
 
-                if face.shape[0] > 0 and face.shape[1] > 0:
-                    face_pil = Image.fromarray(face)
+                face_pil = Image.fromarray(face)
+                try:
                     face_cropped = mtcnn(face_pil)
-
                     if face_cropped is not None and len(face_cropped) > 0:
-                        try:
-                            name, prob = recognize_face(face_cropped[0])
-                            if name is None:
-                                continue
-                            name_for_query = name.replace('_', ' ')
-                            label = f"{name} ({prob:.2f})" if prob > 0.7 else "Unknown"
-                            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                        name, prob = recognize_face(face_cropped[0])
+                        label = f"{name} ({prob:.2f})" if name and prob > 0.7 else "Unknown"
+                        cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                            if prob > 0.7:
-                                cursor = connection.cursor()
-                                cursor.execute(
-                                    """
-                                    SELECT student_id 
-                                    FROM Students 
-                                    WHERE CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) ILIKE %s
-                                    """,
-                                    (name_for_query,)
-                                )
-                                student = cursor.fetchone()
-                                if student:
-                                    student_id = student[0]
-                                    mark_attendance(student_id, period_id, connection, is_within_time_limit=True)
-                                    recognized_students.add(student_id)
-                                    logging.debug(f"Recognized and marked student ID {student_id} for period {period_id}")
-                                else:
-                                    logging.warning(f"Student '{name}' (queried as '{name_for_query}') not found in database.")
-                                cursor.close()
+                        if name and prob > 0.7:
+                            try:
+                                rollno_part, name_part = name.split('-', 1)
+                                name_parts = name_part.split('_')
+                                if len(name_parts) < 2:
+                                    raise ValueError("Invalid name format")
+                                first_name = name_parts[0]
+                                last_name = name_parts[-1]
 
-                        except Exception as e:
-                            logging.error(f"Error recognizing face: {e}")
+                                with connection.cursor() as cursor:
+                                    cursor.execute(
+                                        """
+                                        SELECT student_id
+                                        FROM Students
+                                        WHERE rollno = %s AND LOWER(first_name) = LOWER(%s) AND LOWER(last_name) = LOWER(%s)
+                                        """,
+                                        (rollno_part, first_name, last_name)
+                                    )
+                                    student = cursor.fetchone()
+                                    if student and student[0] not in recognized_students:
+                                        student_id = student[0]
+                                        mark_attendance(student_id, period_id, connection, is_within_time_limit=True)
+                                        recognized_students.add(student_id)
+                                        logging.info(f"Recognized and marked student ID {student_id} for period {period_id}")
+                            except Exception as e:
+                                logging.error(f"Error parsing or querying student '{name}': {e}")
+                except Exception as e:
+                    logging.error(f"Error processing face with MTCNN: {e}")
 
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        else:
+            logging.warning("No faces detected in the current frame.")
 
         cv2.imshow('Mark Attendance', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             logging.info(f"User exited attendance marking after {elapsed_time / 60:.1f} minutes.")
             break
 
-    # Mark all remaining students as absent
-    cursor = connection.cursor()
-    try:
-        cursor.execute("SELECT student_id FROM Students")
-        all_students = {row[0] for row in cursor.fetchall()}
-        unmarked_students = all_students - recognized_students
+    # Mark all remaining students as absent after live attendance
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute("SELECT student_id FROM Students")
+            all_students = {row[0] for row in cursor.fetchall()}
+            unmarked_students = all_students - recognized_students
 
-        if unmarked_students:
-            for student_id in unmarked_students:
-                cursor.execute(
+            if unmarked_students:
+                cursor.executemany(
                     """
                     INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
                     VALUES (%s, %s, 'absent', NOW())
                     ON CONFLICT (student_id, period_id) DO NOTHING
                     """,
-                    (student_id, period_id)
+                    [(student_id, period_id) for student_id in unmarked_students]
                 )
-            connection.commit()
-            logging.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
-            absent_message = f"Marked {len(unmarked_students)} students as absent."
-        else:
-            logging.info("No students to mark as absent for period {period_id}")
-            absent_message = "No students to mark as absent."
-    except Exception as e:
-        logging.error(f"Error marking absent students: {e}")
-        connection.rollback()
-        cap.release()
-        cv2.destroyAllWindows()
-        connection.close()
-        return jsonify({"status": "error", "message": f"Error marking absent students: {str(e)}"}), 500
-    finally:
-        cursor.close()
+                connection.commit()
+                logging.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
+                absent_message = f"Marked {len(unmarked_students)} students as absent."
+            else:
+                logging.info(f"No students to mark as absent for period {period_id}")
+                absent_message = "No students to mark as absent."
+        except Exception as e:
+            logging.error(f"Error marking absent students: {e}")
+            connection.rollback()
 
     cap.release()
     cv2.destroyAllWindows()
     connection.close()
 
-    # Return JSON response instead of redirect
     return jsonify({
         "status": "success",
         "message": "Attendance marking completed.",
         "absent_message": absent_message,
         "recognized_count": len(recognized_students)
     })
-
 
 @app.route('/')
 def index():
@@ -305,11 +363,11 @@ def index():
 @app.route('/capture', methods=['GET', 'POST'])
 def capture():
     if request.method == 'POST':
-        name = request.form['name']
-        rollno = request.form['rollno']
+        name = request.form['name'].strip()
+        rollno = request.form['rollno'].strip()
 
-        if len(rollno) != 6:
-            flash("Roll No must be exactly 6 characters long.", "error")
+        if not rollno or len(rollno) != 6 or not rollno.isdigit():
+            flash("Roll No must be exactly 6 digits.", "error")
             return redirect(url_for('capture'))
 
         exists, _ = check_rollno_in_aligned(rollno, ALIGNED_DATA_PATH)
@@ -342,13 +400,18 @@ def capture():
             if not ret:
                 flash("Error: Could not read frame.", "error")
                 break
+            cv2.imshow('Capturing...', frame)
             frame_filename = os.path.join(output_dir, f'frame_{frame_count:03d}.jpg')
             cv2.imwrite(frame_filename, frame)
             frame_count += 1
             time.sleep(frame_interval)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
         cap.release()
-        flash(f"Finished capturing frames for Roll No {rollno} and Name {name}.", "success")
+        cv2.destroyAllWindows()
+        flash(f"Finished capturing {frame_count} frames for Roll No {rollno} and Name {name}.", "success")
+        save_uploaded_user(rollno)
         return redirect(url_for('capture'))
 
     return render_template('capture.html')
@@ -358,7 +421,6 @@ def align():
     if request.method == 'POST':
         result = align_images(config)
         flash(f"Alignment completed. Total images: {result['total']}, Successfully aligned: {result['aligned']}", "success")
-        print(result['total'])
         return redirect(url_for('align'))
     return render_template('align.html')
 
@@ -375,23 +437,23 @@ def course():
     connection = get_db_connection()
     courses = []
     if connection:
-        cursor = connection.cursor()
-        cursor.execute("SELECT course_id, course_name FROM Courses ORDER BY course_name")
-        courses = cursor.fetchall()
-        cursor.close()
-        connection.close()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT course_id, course_name FROM Courses ORDER BY course_name")
+                courses = cursor.fetchall()
+        finally:
+            connection.close()
 
     if request.method == 'POST':
         course_option = request.form['course_option']
         start_time = request.form['start_time']
         period_date = request.form['period_date']
-        duration = request.form.get('duration', '').strip()  # Get duration from form, default to empty string
+        duration = request.form.get('duration', '').strip()
 
-        # Validate duration
         try:
             duration = int(duration)
             if duration < 45 or duration > 120:
-                flash("Duration must be between 45 and 90 minutes.", "error")
+                flash("Duration must be between 45 and 120 minutes.", "error")
                 return redirect(url_for('course'))
         except ValueError:
             flash("Duration must be a valid integer.", "error")
@@ -402,78 +464,77 @@ def course():
             flash("Error connecting to database.", "error")
             return redirect(url_for('course'))
 
-        cursor = connection.cursor()
         try:
-            if course_option == 'new':
-                course_name = request.form['course_name']
-                if not course_name:
-                    flash("Course name is required when adding a new course.", "error")
-                    return redirect(url_for('course'))
+            with connection.cursor() as cursor:
+                if course_option == 'new':
+                    course_name = request.form['course_name'].strip()
+                    if not course_name:
+                        flash("Course name is required when adding a new course.", "error")
+                        return redirect(url_for('course'))
+
+                    cursor.execute(
+                        "INSERT INTO Courses (course_name, course_code) VALUES (%s, %s) RETURNING course_id",
+                        (course_name, f"{course_name[:3].upper()}101")
+                    )
+                    course_id = cursor.fetchone()[0]
+                    flash(f"New course {course_name} added successfully.", "success")
+                else:
+                    course_id = course_option
+                    cursor.execute("SELECT course_name FROM Courses WHERE course_id = %s", (course_id,))
+                    course_name = cursor.fetchone()[0]
 
                 cursor.execute(
-                    "INSERT INTO Courses (course_name, course_code) VALUES (%s, %s) RETURNING course_id",
-                    (course_name, f"{course_name[:3].upper()}101")
+                    """
+                    INSERT INTO Class_Periods (course_id, period_date, start_time, duration)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (course_id, period_date, start_time, duration)
                 )
-                course_id = cursor.fetchone()[0]
-                flash(f"New course {course_name} added successfully.", "success")
-            else:
-                course_id = course_option
-                cursor.execute("SELECT course_name FROM Courses WHERE course_id = %s", (course_id,))
-                course_name = cursor.fetchone()[0]
-
-            # Insert the new class period with the custom duration
-            cursor.execute(
-                """
-                INSERT INTO Class_Periods (course_id, period_date, start_time, duration)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (course_id, period_date, start_time, duration)
-            )
-            connection.commit()
-            flash(f"Class period for {course_name} on {period_date} at {start_time} with duration {duration} minutes added successfully.", "success")
-
+                connection.commit()
+                flash(f"Class period for {course_name} on {period_date} at {start_time} with duration {duration} minutes added successfully.", "success")
         except Exception as e:
             connection.rollback()
             flash(f"Error adding class period: {str(e)}", "error")
         finally:
-            cursor.close()
             connection.close()
 
         return redirect(url_for('course'))
 
     return render_template('course.html', courses=courses)
 
-
 @app.route('/get_attendance/<int:period_id>', methods=['GET'])
 def get_attendance(period_id):
     connection = get_db_connection()
     records = []
     course_name = "Unknown Subject"
+    subject_date = None
 
     if connection:
-        cursor = connection.cursor()
-        cursor.execute("""
-            SELECT s.first_name, s.middle_name, s.last_name, s.rollno, a.status, a.recorded_timestamp
-            FROM Attendance a
-            JOIN Students s ON a.student_id = s.student_id
-            WHERE a.period_id = %s
-        """, (period_id,))
-        records = cursor.fetchall()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT s.first_name, s.middle_name, s.last_name, s.rollno, a.status, a.recorded_timestamp
+                    FROM Attendance a
+                    JOIN Students s ON a.student_id = s.student_id
+                    WHERE a.period_id = %s
+                """, (period_id,))
+                records = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT c.course_name
-            FROM Class_Periods cp
-            JOIN Courses c ON cp.course_id = c.course_id
-            WHERE cp.period_id = %s
-        """, (period_id,))
-        course_name_result = cursor.fetchone()
-        course_name = course_name_result[0] if course_name_result else "Unknown Subject"
-        cursor.close()
-        connection.close()
+                cursor.execute("""
+                    SELECT c.course_name, cp.period_date
+                    FROM Class_Periods cp
+                    JOIN Courses c ON cp.course_id = c.course_id
+                    WHERE cp.period_id = %s
+                """, (period_id,))
+                course_info = cursor.fetchone()
+                if course_info:
+                    course_name, subject_date = course_info
+        finally:
+            connection.close()
 
-    # Convert records to a list of dictionaries for JSON
     attendance_data = {
         "course_name": course_name,
+        "date": subject_date.strftime("%Y-%m-%d") if subject_date else "N/A",
         "records": [
             {
                 "first_name": r[0],
@@ -481,7 +542,6 @@ def get_attendance(period_id):
                 "last_name": r[2],
                 "roll_no": r[3],
                 "status": r[4],
-                # Format timestamp as "YYYY-MM-DD HH:MM AM/PM" (12-hour)
                 "timestamp": r[5].strftime("%Y-%m-%d %I:%M %p") if r[5] else "N/A"
             }
             for r in records
@@ -492,71 +552,62 @@ def get_attendance(period_id):
 @app.route('/attendance', methods=['GET', 'POST'])
 def attendance():
     periods = get_periods()
-    selected_period_id = None
-    records = None
+    selected_period_id = request.form.get('period_id') or request.args.get('period_id')
     course_name = None
 
-    if request.method == 'POST':
-        # Handle any unexpected POST requests (e.g., if AJAX fails)
-        period_id = request.form.get('period_id')
-        if period_id:
-            selected_period_id = period_id
-
-    if request.args.get('period_id') or selected_period_id:
-        selected_period_id = selected_period_id or request.args.get('period_id')
+    if selected_period_id:
         connection = get_db_connection()
         if connection:
-            cursor = connection.cursor()
-            cursor.execute("""
-                SELECT c.course_name
-                FROM Class_Periods cp
-                JOIN Courses c ON cp.course_id = c.course_id
-                WHERE cp.period_id = %s
-            """, (selected_period_id,))
-            course_name_result = cursor.fetchone()
-            course_name = course_name_result[0] if course_name_result else "Unknown Subject"
-            logging.debug(f"Course name for period {selected_period_id}: {course_name}")
-            cursor.close()
-            connection.close()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT c.course_name
+                        FROM Class_Periods cp
+                        JOIN Courses c ON cp.course_id = c.course_id
+                        WHERE cp.period_id = %s
+                    """, (selected_period_id,))
+                    course_name_result = cursor.fetchone()
+                    course_name = course_name_result[0] if course_name_result else "Unknown Subject"
+                    logging.debug(f"Course name for period {selected_period_id}: {course_name}")
+            finally:
+                connection.close()
 
     return render_template('attendance.html', periods=periods, selected_period_id=selected_period_id, course_name=course_name)
 
 @app.route('/train', methods=['GET', 'POST'])
 def train():
+    global classifier, class_names, num_classes
     if request.method == 'POST':
-        aligned_dir = os.path.join('facial_recognition', 'dataset', 'aligned')
-        embeddings_dir = os.path.join('facial_recognition', 'embeddings')
-        models_dir = os.path.join('facial_recognition', 'models')
-        plots_dir = os.path.join('facial_recognition', 'plots')
-
         # Ensure directories exist
-        os.makedirs(embeddings_dir, exist_ok=True)
-        os.makedirs(models_dir, exist_ok=True)
-        os.makedirs(plots_dir, exist_ok=True)
+        for directory in [EMBEDDINGS_DIR, MODELS_DIR, PLOTS_DIR]:
+            os.makedirs(directory, exist_ok=True)
 
         try:
-            # Prepare training data
             logging.info("Preparing training data...")
-            X_train, y_train, X_val, y_val, num_classes = prepare_training_data(aligned_dir, embeddings_dir)
+            X_train, y_train, X_val, y_val, num_classes = prepare_training_data(ALIGNED_DATA_PATH, EMBEDDINGS_DIR)
 
-            # Train the classifier
             logging.info("Starting model training...")
             train_loss_history, val_loss_history, train_accuracy_history, val_accuracy_history = train_classifier(
-                X_train, y_train, X_val, y_val, num_classes, epochs=100
+                X_train, y_train, X_val, y_val, num_classes, epochs=50, models_dir=MODELS_DIR, plots_dir=PLOTS_DIR
             )
 
-            # Update the classifier in the global scope (for use in mark_attendance_route)
-            global classifier
+            # Update global classifier and class names
             classifier = Classifier(num_classes).to(device)
-            classifier.load_state_dict(torch.load(os.path.join(models_dir, 'best_classifier.pth')))
+            classifier.load_state_dict(torch.load(os.path.join(MODELS_DIR, 'best_classifier.pth'), map_location=device))
             classifier.eval()
 
-            flash(f"Training completed successfully. Model saved. Plots generated in {plots_dir}.", "success")
-            return redirect(url_for('train'))
+            # Load the updated label encoder to get class names
+            with open(os.path.join(EMBEDDINGS_DIR, 'label_encoder.pkl'), 'rb') as f:
+                le = pickle.load(f)
+            class_names = list(le.classes_)
+            logging.info(f"Updated class_names after training: {class_names}")
+
+            flash(f"Training completed successfully. Model saved to {MODELS_DIR}. Plots generated in {PLOTS_DIR}.", "success")
         except Exception as e:
             logging.error(f"Error during training: {e}")
             flash(f"Error during training: {str(e)}", "error")
-            return redirect(url_for('train'))
+
+        return redirect(url_for('train'))
 
     return render_template('train.html')
 
