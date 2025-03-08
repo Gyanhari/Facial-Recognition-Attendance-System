@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Agg')  # Use Agg backend (non-GUI)
+matplotlib.use('Agg')  # Use non-GUI backend (Agg)
 
 import torch
 import torch.nn as nn
@@ -12,7 +12,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-import cv2  # Use OpenCV instead of PIL
+import cv2  
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import logging

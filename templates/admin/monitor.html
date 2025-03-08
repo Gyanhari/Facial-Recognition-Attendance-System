@@ -1,0 +1,52 @@
+{% extends "admin/layout.html" %} {% block title %}System Monitor{% endblock %}
+{% block content %}
+<h2>System Monitor</h2>
+<div
+  style="
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #ecf0f1;
+    border-left: 4px solid #2ecc71;
+    border-radius: 4px;
+    font-weight: bold;
+  "
+>
+  Classifier Status: {{ classifier_status }}
+</div>
+
+<h3>Recent Logs</h3>
+{% if logs %} {% for log in logs %} {% set log_parts = log.split(' - ') %} {% if
+log_parts|length >= 3 %} {% set timestamp = log_parts[0] %} {% set level =
+log_parts[1] %} {% set message = log_parts[2]|trim %}
+<div
+  style="margin: 10px 0; padding: 10px; border-radius: 4px; display: flex; align-items: center; gap: 10px; background-color: {% if level|lower == 'info' %}#e8f5e9{% elif level|lower == 'error' %}#fdecea{% else %}#fef9e7{% endif %}; border-left: 4px solid {% if level|lower == 'info' %}#2ecc71{% elif level|lower == 'error' %}#e74c3c{% else %}#f1c40f{% endif %};"
+>
+  <span style="color: #7f8c8d; font-size: 0.9em">{{ timestamp }}</span>
+  <span style="font-weight: bold; min-width: 60px">{{ level }}</span>
+  <span style="flex-grow: 1">{{ message }}</span>
+</div>
+{% else %}
+<div
+  style="
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #e8f5e9;
+    border-left: 4px solid #2ecc71;
+  "
+>
+  <span style="color: #7f8c8d; font-size: 0.9em">N/A</span>
+  <span style="font-weight: bold; min-width: 60px">INFO</span>
+  <span style="flex-grow: 1">{{ log|trim }}</span>
+</div>
+{% endif %} {% endfor %} {% else %}
+<p>No logs available.</p>
+{% endif %}
+
+<form method="POST" action="{{ url_for('admin.retrain_model') }}">
+  <button type="submit">Re-train Model</button>
+</form>
+{% endblock %}

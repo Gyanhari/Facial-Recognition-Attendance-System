@@ -8,7 +8,7 @@ import imageio
 from facenet_pytorch import MTCNN, InceptionResnetV1
 from facial_recognition.src.helper import get_dataset, check_rollno_in_aligned
 from facial_recognition.src.align_dataset import align_images
-from facial_recognition.src.train_model import prepare_training_data, train_classifier
+from facial_recognition.src.train_model import prepare_training_data, train_classifier, Classifier
 from facial_recognition.src.populate_databse import populate_students
 import psycopg2
 from psycopg2 import Error
@@ -18,12 +18,30 @@ import torch.nn as nn
 import pandas as pd
 import logging
 import pickle
+from admin_panel import admin_bp
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('facial_recognition_app')
+logger.setLevel(logging.INFO)
+
+for handler in logger.handlers[:]:
+    logger.removeHandler(handler)
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+log_file = os.path.join(LOG_DIR, 'app.log')
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
+app.register_blueprint(admin_bp, url_prefix='/admin')
 
 # Database configuration
 DB_CONFIG = {
@@ -78,9 +96,9 @@ try:
     classifier = Classifier(num_classes).to(device)
     classifier.load_state_dict(torch.load(os.path.join(MODELS_DIR, 'best_classifier.pth'), map_location=device))
     classifier.eval()
-    logging.info(f"Loaded classifier with {num_classes} classes: {class_names}")
+    logger.info(f"Loaded classifier with {num_classes} classes: {class_names}")
 except Exception as e:
-    logging.error(f"Error loading initial classifier or label encoder: {e}")
+    logger.error(f"Error loading initial classifier or label encoder: {e}")
 
 config = {
     "input_dir": RAW_DATA_PATH,
@@ -99,7 +117,7 @@ def get_db_connection():
     try:
         return psycopg2.connect(**DB_CONFIG)
     except Error as e:
-        logging.error(f"Error connecting to database: {e}")
+        logger.error(f"Error connecting to database: {e}")
         return None
 
 def load_uploaded_users():
@@ -133,7 +151,7 @@ def get_periods():
 def recognize_face(face_tensor):
     global classifier
     if classifier is None:
-        logging.error("Classifier not loaded.")
+        logger.error("Classifier not loaded.")
         return None, 0.0
     with torch.no_grad():
         embedding = facenet(face_tensor.unsqueeze(0).to(device))
@@ -160,19 +178,19 @@ def mark_attendance(student_id, period_id, connection, is_within_time_limit):
                     (student_id, period_id, status)
                 )
                 connection.commit()
-                logging.info(f"Successfully marked student ID {student_id} as {status} for period {period_id}")
+                logger.info(f"Successfully marked student ID {student_id} as {status} for period {period_id}")
                 flash(f"Marked student ID {student_id} as {status}", "success")
             else:
-                logging.info(f"Student ID {student_id} already marked with status {existing_status[0]} for period {period_id}")
+                logger.info(f"Student ID {student_id} already marked with status {existing_status[0]} for period {period_id}")
     except Exception as e:
-        logging.error(f"Error marking attendance for student ID {student_id}: {e}")
+        logger.error(f"Error marking attendance for student ID {student_id}: {e}")
         connection.rollback()
 
 @app.route('/mark_attendance/<int:period_id>', methods=['POST'])
 def mark_attendance_route(period_id):
     global classifier, class_names, num_classes
     if classifier is None or len(class_names) == 0 or num_classes == 0:
-        logging.error("Facial recognition models not loaded or class names empty.")
+        logger.error("Facial recognition models not loaded or class names empty.")
         return jsonify({"status": "error", "message": "Facial recognition models not loaded or class names empty."}), 500
 
     connection = get_db_connection()
@@ -201,7 +219,7 @@ def mark_attendance_route(period_id):
     current_time = datetime.now()
 
     if current_time > period_end:
-        logging.info(f"Period {period_id} has ended at {period_end}. Marking all unmarked students as absent.")
+        logger.info(f"Period {period_id} has ended at {period_end}. Marking all unmarked students as absent.")
         with connection.cursor() as cursor:
             try:
                 cursor.execute("SELECT student_id FROM Students")
@@ -220,13 +238,13 @@ def mark_attendance_route(period_id):
                         [(student_id, period_id) for student_id in unmarked_students]
                     )
                     connection.commit()
-                    logging.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
+                    logger.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
                     absent_message = f"Marked {len(unmarked_students)} students as absent due to period end."
                 else:
-                    logging.info(f"No unmarked students to mark as absent for period {period_id}")
+                    logger.info(f"No unmarked students to mark as absent for period {period_id}")
                     absent_message = "No unmarked students to mark as absent."
             except Exception as e:
-                logging.error(f"Error marking absent students: {e}")
+                logger.error(f"Error marking absent students: {e}")
                 connection.rollback()
                 connection.close()
                 return jsonify({"status": "error", "message": f"Error marking absent students: {str(e)}"}), 500
@@ -252,12 +270,12 @@ def mark_attendance_route(period_id):
     while True:
         elapsed_time = time.time() - start_time
         if elapsed_time > time_limit:
-            logging.info("5-minute time limit reached. Stopping webcam.")
+            logger.info("5-minute time limit reached. Stopping webcam.")
             break
 
         ret, frame = cap.read()
         if not ret:
-            logging.error("Error: Failed to capture frame.")
+            logger.error("Error: Failed to capture frame.")
             break
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -304,19 +322,19 @@ def mark_attendance_route(period_id):
                                         student_id = student[0]
                                         mark_attendance(student_id, period_id, connection, is_within_time_limit=True)
                                         recognized_students.add(student_id)
-                                        logging.info(f"Recognized and marked student ID {student_id} for period {period_id}")
+                                        logger.info(f"Recognized and marked student ID {student_id} for period {period_id}")
                             except Exception as e:
-                                logging.error(f"Error parsing or querying student '{name}': {e}")
+                                logger.error(f"Error parsing or querying student '{name}': {e}")
                 except Exception as e:
-                    logging.error(f"Error processing face with MTCNN: {e}")
+                    logger.error(f"Error processing face with MTCNN: {e}")
 
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
         else:
-            logging.warning("No faces detected in the current frame.")
+            logger.warning("No faces detected in the current frame.")
 
         cv2.imshow('Mark Attendance', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            logging.info(f"User exited attendance marking after {elapsed_time / 60:.1f} minutes.")
+            logger.info(f"User exited attendance marking after {elapsed_time / 60:.1f} minutes.")
             break
 
     # Mark all remaining students as absent after live attendance
@@ -336,13 +354,13 @@ def mark_attendance_route(period_id):
                     [(student_id, period_id) for student_id in unmarked_students]
                 )
                 connection.commit()
-                logging.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
+                logger.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
                 absent_message = f"Marked {len(unmarked_students)} students as absent."
             else:
-                logging.info(f"No students to mark as absent for period {period_id}")
+                logger.info(f"No students to mark as absent for period {period_id}")
                 absent_message = "No students to mark as absent."
         except Exception as e:
-            logging.error(f"Error marking absent students: {e}")
+            logger.error(f"Error marking absent students: {e}")
             connection.rollback()
 
     cap.release()
@@ -358,7 +376,8 @@ def mark_attendance_route(period_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return redirect(url_for('capture'))
+
 
 @app.route('/capture', methods=['GET', 'POST'])
 def capture():
@@ -534,7 +553,7 @@ def get_attendance(period_id):
 
     attendance_data = {
         "course_name": course_name,
-        "date": subject_date.strftime("%Y-%m-%d") if subject_date else "N/A",
+        "date": subject_date.strftime("%Y-%m-d") if subject_date else "N/A",
         "records": [
             {
                 "first_name": r[0],
@@ -568,7 +587,7 @@ def attendance():
                     """, (selected_period_id,))
                     course_name_result = cursor.fetchone()
                     course_name = course_name_result[0] if course_name_result else "Unknown Subject"
-                    logging.debug(f"Course name for period {selected_period_id}: {course_name}")
+                    logger.debug(f"Course name for period {selected_period_id}: {course_name}")
             finally:
                 connection.close()
 
@@ -583,10 +602,10 @@ def train():
             os.makedirs(directory, exist_ok=True)
 
         try:
-            logging.info("Preparing training data...")
+            logger.info("Preparing training data...")
             X_train, y_train, X_val, y_val, num_classes = prepare_training_data(ALIGNED_DATA_PATH, EMBEDDINGS_DIR)
 
-            logging.info("Starting model training...")
+            logger.info("Starting model training...")
             train_loss_history, val_loss_history, train_accuracy_history, val_accuracy_history = train_classifier(
                 X_train, y_train, X_val, y_val, num_classes, epochs=50, models_dir=MODELS_DIR, plots_dir=PLOTS_DIR
             )
@@ -600,11 +619,11 @@ def train():
             with open(os.path.join(EMBEDDINGS_DIR, 'label_encoder.pkl'), 'rb') as f:
                 le = pickle.load(f)
             class_names = list(le.classes_)
-            logging.info(f"Updated class_names after training: {class_names}")
+            logger.info(f"Updated class_names after training: {class_names}")
 
             flash(f"Training completed successfully. Model saved to {MODELS_DIR}. Plots generated in {PLOTS_DIR}.", "success")
         except Exception as e:
-            logging.error(f"Error during training: {e}")
+            logger.error(f"Error during training: {e}")
             flash(f"Error during training: {str(e)}", "error")
 
         return redirect(url_for('train'))

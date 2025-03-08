@@ -1,0 +1,56 @@
+{% extends "admin/layout.html" %} {% block title %}Manage Attendance{% endblock
+%} {% block content %}
+<h2>Attendance for {{ course_name }} (Period ID: {{ period_id }})</h2>
+
+<h3>Mark Attendance</h3>
+<form method="POST">
+  <input type="hidden" name="action" value="mark" />
+  <label
+    >Student:
+    <select name="student_id" required>
+      {% for student in students %}
+      <option value="{{ student[0] }}">
+        {{ student[1] }} - {{ student[2] }} {{ student[4] }}
+      </option>
+      {% endfor %}
+    </select> </label
+  ><br />
+  <label
+    >Status:
+    <select name="status" required>
+      <option value="present">Present</option>
+      <option value="absent">Absent</option>
+    </select> </label
+  ><br />
+  <button type="submit">Mark Attendance</button>
+</form>
+
+<h3>Attendance Records</h3>
+{% if records %}
+<table border="1">
+  <tr>
+    <th>First Name</th>
+    <th>Middle Name</th>
+    <th>Last Name</th>
+    <th>Roll No</th>
+    <th>Status</th>
+    <th>Timestamp</th>
+  </tr>
+  {% for record in records %}
+  <tr>
+    <td>{{ record[0] }}</td>
+    <td>{{ record[1] if record[1] else '' }}</td>
+    <td>{{ record[2] }}</td>
+    <td>{{ record[3] }}</td>
+    <td>{{ record[4] }}</td>
+    <td>{{ record[5] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<form method="POST">
+  <input type="hidden" name="action" value="export" />
+  <button type="submit">Export to CSV</button>
+</form>
+{% else %}
+<p>No attendance records available for this period.</p>
+{% endif %} {% endblock %}

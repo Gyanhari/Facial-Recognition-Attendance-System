@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Admin Panel</title>
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='admin_style.css') }}"
+  />
+    <style>
+
+        /* Highlight active page */
+        {% if request.endpoint == 'admin.admin_dashboard' %}
+            <style>.navbar a:nth-child(1) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% elif request.endpoint == 'admin.manage_students' %}
+            <style>.navbar a:nth-child(2) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% elif request.endpoint == 'admin.manage_courses' %}
+            <style>.navbar a:nth-child(3) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% elif request.endpoint == 'admin.manage_periods' %}
+            <style>.navbar a:nth-child(4) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% elif request.endpoint == 'attendance' %}
+            <style>.navbar a:nth-child(5) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% elif request.endpoint == 'admin.monitor_system' %}
+            <style>.navbar a:nth-child(6) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% elif request.endpoint == 'admin.manage_settings' %}
+            <style>.navbar a:nth-child(7) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
+        {% endif %}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Facial Recognition Attendance System - Admin Panel</h1>
+        <div class="menu" id="menu">
+          <img src="{{ url_for('static', filename='hamburger.svg') }}" alt="Menu">
+        </div>
+    </header>
+    <div class="navbar" id="navbar">
+        <a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('admin.manage_students') }}">Students</a>
+        <a href="{{ url_for('admin.manage_courses') }}">Courses</a>
+        <a href="{{ url_for('admin.manage_periods') }}">Periods</a>
+        <a href="{{ url_for('attendance') }}">Attendance</a>
+        <a href="{{ url_for('admin.monitor_system') }}">Monitor</a>
+        <a href="{{ url_for('admin.manage_settings') }}">Settings</a>
+        <a href="{{ url_for('capture') }}">Main Page</a>
+    </div>
+
+
+    <main>
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        <div class="content-card">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+    <script>
+      const menuButton = document.getElementById('menu');
+      const navBar = document.getElementById('navbar');
+      menuButton.addEventListener('click', ()=>{
+        if (navBar.style.display === 'none' || navBar.style.display === '') {
+        navBar.style.display = 'block';
+        }
+        else {
+        navBar.style.display = 'none';  
+      }})
+    </script>
+</body>
+</html>

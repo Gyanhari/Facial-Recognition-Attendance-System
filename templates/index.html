@@ -10,16 +10,23 @@
     />
   </head>
   <body>
-    <header>
+    <header class="header">
       <h1>Facial Recognition Attendance System</h1>
+      <div class="menu" id="menu">
+        <img
+          src="{{ url_for('static', filename='hamburger.svg') }}"
+          alt="Menu"
+        />
+      </div>
     </header>
-    <nav>
+    <nav class="navbar" id="navbar">
       <a href="{{ url_for('capture') }}">Capture Images</a>
       <a href="{{ url_for('align') }}">Align Images</a>
       <a href="{{ url_for('populate') }}">Populate Database</a>
       <a href="{{ url_for('train') }}">Train</a>
       <a href="{{ url_for('course') }}">Manage Courses</a>
       <a href="{{ url_for('attendance') }}">Attendance</a>
+      <a href="{{ url_for('admin.admin_dashboard') }}">Admin Panel</a>
     </nav>
     <main>
       {% block content %}
@@ -27,8 +34,19 @@
       <p>Use the navigation links above to manage the attendance system.</p>
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %} {% for category, message in messages %}
-      <div class="flash {{ category }}">{{ message }}</div>
+      <div class="flash-{{ category }}">{{ message }}</div>
       {% endfor %} {% endif %} {% endwith %} {% endblock %}
     </main>
+    <script>
+      const menuButton = document.getElementById("menu");
+      const navBar = document.getElementById("navbar");
+      menuButton.addEventListener("click", () => {
+        if (navBar.style.display === "none" || navBar.style.display === "") {
+          navBar.style.display = "block";
+        } else {
+          navBar.style.display = "none";
+        }
+      });
+    </script>
   </body>
 </html>

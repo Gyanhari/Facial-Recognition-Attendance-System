@@ -1,9 +1,12 @@
 {% extends "index.html" %} {% block content %}
-<h2>Align Images</h2>
-<form method="post">
-  <button type="submit">Start Alignment</button>
-</form>
-{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
-%} {% for category, message in messages %}
-<div class="flash {{ category }}">{{ message }}</div>
-{% endfor %} {% endif %} {% endwith %} {% endblock %}
+<div class="content-card">
+  <h2>Align Images</h2>
+  <form method="post">
+    <button type="submit">Start Alignment</button>
+  </form>
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="flash-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+</div>
+{% endblock %}

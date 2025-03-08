@@ -1,0 +1,70 @@
+{% extends "admin/layout.html" %}
+{% block title %}Manage Periods{% endblock %}
+{% block content %}
+<h2>Manage Periods</h2>
+
+<h3>Add Period</h3>
+<form method="POST">
+    <input type="hidden" name="action" value="add">
+    <label>Course: 
+        <select name="course_id" required>
+            {% for course in courses %}
+                <option value="{{ course[0] }}">{{ course[1] }}</option>
+            {% endfor %}
+        </select>
+    </label><br>
+    <label>Date: <input type="date" name="period_date" required></label><br>
+    <label>Start Time: <input type="time" name="start_time" required></label><br>
+    <label>Duration (minutes): <input type="number" name="duration" min="45" max="120" required></label><br>
+    <button type="submit">Add Period</button>
+</form>
+
+<h3>Existing Periods</h3>
+{% if periods %}
+<table>
+    <tr>
+        <th>S.N.</th>
+        <th>Course Name</th>
+        <th>Date</th>
+        <th>Start Time</th>
+        <th>Duration (minutes)</th>
+        <th>Actions</th>
+    </tr>
+    {% for period in periods %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ period[1] }}</td>
+        <td>{{ period[2] }}</td>
+        <td>{{ period[3] }}</td>
+        <td>{{ period[4] }}</td>
+        <td>
+            <form method="POST" style="display:inline;">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="period_id" value="{{ period[0] }}">
+                <label>Course: 
+                    <select name="course_id" required>
+                        {% for course in courses %}
+                            <option value="{{ course[0] }}" {% if course[0] == period[5] %}selected{% endif %}>
+                                {{ course[1] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label><br>
+                <label>Date: <input type="date" name="period_date" value="{{ period[2] }}" required></label><br>
+                <label>Start Time: <input type="time" name="start_time" value="{{ period[3] }}" required></label><br>
+                <label>Duration: <input type="number" name="duration" value="{{ period[4] }}" min="45" max="120" required></label><br>
+                <button type="submit">Update</button>
+            </form>
+            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this period?');">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="period_id" value="{{ period[0] }}">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No periods available.</p>
+{% endif %}
+{% endblock %}

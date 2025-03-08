@@ -43,7 +43,7 @@ def get_embeddings(image_paths):
     # Use tqdm to show progress for each image being processed
     for img_path in tqdm(image_paths, desc="Extracting embeddings", unit="image"):
         img = Image.open(img_path).convert('RGB')
-        img = transforms.ToTensor()(img).unsqueeze(0).to(device)  # Move tensor to GPU
+        img = transforms.ToTensor()(img).unsqueeze(0).to(device)  # Move tensor to GPU/CPU
         embedding = facenet(img)  # Extract embedding
         embeddings.append(embedding.detach().cpu().numpy().squeeze())  # Detach and move to CPU for storage
     return embeddings

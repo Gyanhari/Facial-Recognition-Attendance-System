@@ -1,13 +1,16 @@
 {% extends "index.html" %} {% block content %}
-<h2>Capture Images for New Student</h2>
-<form method="post">
-  <label for="name">Name:</label>
-  <input type="text" id="name" name="name" required />
-  <label for="rollno">Roll No (6 characters):</label>
-  <input type="text" id="rollno" name="rollno" required />
-  <button type="submit">Capture Images</button>
-</form>
-{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
-%} {% for category, message in messages %}
-<div class="flash {{ category }}">{{ message }}</div>
-{% endfor %} {% endif %} {% endwith %} {% endblock %}
+<div class="content-card">
+  <h2>Capture Images for New Student</h2>
+  <form method="post">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required />
+    <label for="rollno">Roll No (6 characters):</label>
+    <input type="text" id="rollno" name="rollno" required />
+    <button type="submit">Capture Images</button>
+  </form>
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="flash-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+</div>
+{% endblock %}

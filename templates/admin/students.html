@@ -1,0 +1,87 @@
+{% extends "admin/layout.html" %} {% block title %}Manage Students{% endblock %}
+{% block content %}
+<h2>Manage Students</h2>
+
+<h3>Add Student</h3>
+<form method="POST">
+  <input type="hidden" name="action" value="add" />
+  <label>Roll No: <input type="text" name="rollno" required /></label><br />
+  <label>First Name: <input type="text" name="first_name" required /></label
+  ><br />
+  <label>Middle Name: <input type="text" name="middle_name" /></label><br />
+  <label>Last Name: <input type="text" name="last_name" required /></label
+  ><br />
+  <button type="submit">Add Student</button>
+</form>
+
+<h3>Existing Students</h3>
+{% if students %}
+<table>
+  <tr>
+    <th>S.N.</th>
+    <th>Roll No</th>
+    <th>First Name</th>
+    <th>Middle Name</th>
+    <th>Last Name</th>
+    <th>Actions</th>
+  </tr>
+  {% for student in students %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ student[1] }}</td>
+    <td>{{ student[2] }}</td>
+    <td>{{ student[3] if student[3] else '' }}</td>
+    <td>{{ student[4] }}</td>
+    <td>
+      <form method="POST" style="display: inline">
+        <input type="hidden" name="action" value="edit" />
+        <input type="hidden" name="student_id" value="{{ student[0] }}" />
+        <label
+          >Roll No:
+          <input
+            type="text"
+            name="rollno"
+            value="{{ student[1] }}"
+            required /></label
+        ><br />
+        <label
+          >First Name:
+          <input
+            type="text"
+            name="first_name"
+            value="{{ student[2] }}"
+            required /></label
+        ><br />
+        <label
+          >Middle Name:
+          <input
+            type="text"
+            name="middle_name"
+            value="{{ student[3] if student[3] else '' }}" /></label
+        ><br />
+        <label
+          >Last Name:
+          <input
+            type="text"
+            name="last_name"
+            value="{{ student[4] }}"
+            required /></label
+        ><br />
+        <button type="submit">Update</button>
+      </form>
+      <form
+        method="POST"
+        style="display: inline"
+        onsubmit="return confirm('Are you sure you want to delete this student?');"
+      >
+        <input type="hidden" name="action" value="delete" />
+        <input type="hidden" name="student_id" value="{{ student[0] }}" />
+        <button type="submit">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No students available.</p>
+{% endif %} {% endblock %}

@@ -1,0 +1,64 @@
+{% extends "admin/layout.html" %} {% block title %}Settings{% endblock %} {%
+block content %}
+<h2>Settings</h2>
+
+<h3>Database Configuration</h3>
+<form method="POST">
+  <label
+    >Host:
+    <input
+      type="text"
+      name="host"
+      placeholder="Host"
+      value="{{ db_config.host }}"
+      required
+  /></label>
+  <label
+    >User:
+    <input
+      type="text"
+      name="user"
+      placeholder="User"
+      value="{{ db_config.user }}"
+      required
+  /></label>
+  <label
+    >Password:
+    <input
+      type="password"
+      name="password"
+      placeholder="Password"
+      value="{{ db_config.password }}"
+      required
+  /></label>
+  <label
+    >Database:
+    <input
+      type="text"
+      name="database"
+      placeholder="Database"
+      value="{{ db_config.database }}"
+      required
+  /></label>
+  <label
+    >Port:
+    <input
+      type="text"
+      name="port"
+      placeholder="Port"
+      value="{{ db_config.port }}"
+      required
+  /></label>
+  <button type="submit">Update Database Config</button>
+</form>
+
+<h3>Capture Parameters</h3>
+<p><strong>Number of Frames:</strong> {{ capture_params.num_frames }}</p>
+<p><strong>Duration (seconds):</strong> {{ capture_params.duration }}</p>
+
+<h3>Training Parameters</h3>
+<p><strong>Epochs:</strong> {{ training_params.epochs }}</p>
+<p><strong>Batch Size:</strong> {{ training_params.batch_size }}</p>
+<p><strong>Learning Rate:</strong> {{ training_params.lr }}</p>
+<p><strong>Patience:</strong> {{ training_params.patience }}</p>
+{% endblock %}

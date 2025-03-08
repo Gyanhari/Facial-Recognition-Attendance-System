@@ -1,0 +1,77 @@
+{% extends "admin/layout.html" %} {% block title %}Dashboard{% endblock %} {%
+block content %}
+<h2>Admin Dashboard</h2>
+
+<h3>Students</h3>
+{% if students %}
+<table>
+  <tr>
+    <th>S.N.</th>
+    <th>Roll No</th>
+    <th>First Name</th>
+    <th>Middle Name</th>
+    <th>Last Name</th>
+  </tr>
+  {% for student in students %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ student[1] }}</td>
+    <td>{{ student[2] }}</td>
+    <td>{{ student[3] if student[3] else '' }}</td>
+    <td>{{ student[4] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No students available.</p>
+{% endif %}
+
+<h3>Courses</h3>
+{% if courses %}
+<table>
+  <tr>
+    <th>S.N.</th>
+    <th>Course Name</th>
+    <th>Course Code</th>
+  </tr>
+  {% for course in courses %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ course[1] }}</td>
+    <td>{{ course[2] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No courses available.</p>
+{% endif %}
+
+<h3>Class Periods</h3>
+{% if periods %}
+<table>
+  <tr>
+    <th>S.N.</th>
+    <th>Course Name</th>
+    <th>Date</th>
+    <th>Start Time</th>
+    <th>Duration (minutes)</th>
+    <th>View Attendance</th>
+  </tr>
+  {% for period in periods %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ period[1] }}</td>
+    <td>{{ period[2] }}</td>
+    <td>{{ period[3] }}</td>
+    <td>{{ period[4] }}</td>
+    <td>
+      <a href="{{ url_for('admin.manage_attendance', period_id=period[0]) }}"
+        >View</a
+      >
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No class periods available.</p>
+{% endif %} {% endblock %}
