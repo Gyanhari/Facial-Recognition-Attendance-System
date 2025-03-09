@@ -61,3 +61,316 @@
 2025-03-08 12:03:00,248 - INFO - Deleted course ID 8
 2025-03-08 12:03:04,001 - INFO - Deleted course ID 9
 2025-03-08 12:03:07,762 - INFO - Deleted course ID 6
+2025-03-08 17:21:28,318 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:21:33,362 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:22:14,947 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:22:19,005 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:22:23,103 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:22:51,473 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:22:59,760 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:23:14,693 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:23:18,808 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:23:22,921 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-03-08 17:35:09,252 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-03-08 17:35:09,306 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-03-08 17:35:09,465 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-03-08 17:39:32,591 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:40:21,125 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:40:25,791 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:44:23,552 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:44:40,239 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-08 17:45:06,622 - INFO - Preparing training data...
+2025-03-08 17:46:54,584 - INFO - Starting model training...
+2025-03-08 17:46:59,093 - INFO - Updated class_names after training: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 17:50:06,404 - INFO - Preparing training data...
+2025-03-08 17:50:09,952 - INFO - Starting model training...
+2025-03-08 17:50:14,696 - INFO - Updated class_names after training: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 17:51:51,122 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-03-08 17:51:51,174 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-03-08 17:51:51,226 - ERROR - Error connecting to database: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-03-08 17:52:52,127 - INFO - Updated database configuration.
+2025-03-08 17:53:38,012 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 17:57:04,486 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 17:57:13,650 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:05:26,362 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:05:36,925 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:12:08,550 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:12:20,352 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:12:32,816 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:14:54,010 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:14:58,912 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:16:58,161 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:17:04,905 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:17:19,411 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:17:37,118 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-08 18:24:25,801 - INFO - Successfully marked student ID 98 as present for period 14
+2025-03-08 18:24:25,802 - INFO - Recognized and marked student ID 98 for period 14
+2025-03-08 18:24:27,688 - INFO - Successfully marked student ID 88 as present for period 14
+2025-03-08 18:24:27,689 - INFO - Recognized and marked student ID 88 for period 14
+2025-03-08 18:24:52,162 - INFO - User exited attendance marking after 0.5 minutes.
+2025-03-08 18:24:52,166 - INFO - Marked 13 students as absent for period 14
+2025-03-08 18:26:07,102 - INFO - Marked attendance for student ID 88 in period 14: present
+2025-03-08 18:28:20,405 - INFO - Student ID 88 already marked with status present for period 14
+2025-03-08 18:28:20,405 - INFO - Recognized and marked student ID 88 for period 14
+2025-03-08 18:28:24,269 - INFO - Student ID 98 already marked with status present for period 14
+2025-03-08 18:28:24,269 - INFO - Recognized and marked student ID 98 for period 14
+2025-03-08 18:28:31,067 - ERROR - Error processing face with MTCNN: torch.cat(): expected a non-empty list of Tensors
+2025-03-08 18:28:32,105 - INFO - User exited attendance marking after 0.2 minutes.
+2025-03-08 18:28:32,110 - INFO - Marked 13 students as absent for period 14
+2025-03-09 08:54:34,091 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 08:54:40,011 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 08:54:55,913 - INFO - Deleted student ID 88
+2025-03-09 08:58:55,681 - INFO - Deleted student ID 98
+2025-03-09 08:59:19,486 - INFO - Preparing training data...
+2025-03-09 08:59:56,494 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-09 09:00:01,932 - ERROR - Error loading initial classifier or label encoder: [Errno 2] No such file or directory: 'facial_recognition\\embeddings\\label_encoder.pkl'
+2025-03-09 09:00:08,325 - INFO - Deleted student ID 103
+2025-03-09 09:00:12,471 - INFO - Preparing training data...
+2025-03-09 09:02:06,504 - INFO - Starting model training...
+2025-03-09 09:02:11,116 - INFO - Updated class_names after training: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:04:14,520 - INFO - Successfully marked student ID 93 as present for period 15
+2025-03-09 09:04:14,526 - INFO - Recognized and marked student ID 93 for period 15
+2025-03-09 09:04:14,764 - INFO - Successfully marked student ID 104 as present for period 15
+2025-03-09 09:04:14,766 - INFO - Recognized and marked student ID 104 for period 15
+2025-03-09 09:04:23,492 - ERROR - Error processing face with MTCNN: torch.cat(): expected a non-empty list of Tensors
+2025-03-09 09:04:24,308 - INFO - User exited attendance marking after 0.2 minutes.
+2025-03-09 09:04:24,310 - INFO - Marked 12 students as absent for period 15
+2025-03-09 09:05:30,292 - INFO - Marked attendance for student ID 89 in period 15: present
+2025-03-09 09:06:47,995 - INFO - Exported attendance for period 15 to attendance_records\attendance_period_15.csv
+2025-03-09 09:09:09,759 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:09:55,294 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:10:00,352 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:10:21,608 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:10:21,616 - INFO - Marked 1 students as absent for period 14
+2025-03-09 09:11:02,394 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:02,542 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:02,674 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:02,785 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:02,909 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,041 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,166 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,311 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,440 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,592 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,698 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,798 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,894 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:03,986 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,080 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,175 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,266 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,372 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,461 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,555 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,651 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,749 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,845 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:04,949 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,039 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,132 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,222 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,315 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,403 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,487 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,587 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,673 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:05,779 - WARNING - No faces detected in the current frame.
+2025-03-09 09:11:06,087 - INFO - Successfully marked student ID 93 as present for period 16
+2025-03-09 09:11:06,087 - INFO - Recognized and marked student ID 93 for period 16
+2025-03-09 09:11:09,278 - INFO - Successfully marked student ID 102 as present for period 16
+2025-03-09 09:11:09,278 - INFO - Recognized and marked student ID 102 for period 16
+2025-03-09 09:11:10,048 - INFO - Successfully marked student ID 104 as present for period 16
+2025-03-09 09:11:10,048 - INFO - Recognized and marked student ID 104 for period 16
+2025-03-09 09:11:16,895 - INFO - User exited attendance marking after 0.3 minutes.
+2025-03-09 09:11:16,900 - INFO - Marked 11 students as absent for period 16
+2025-03-09 09:13:26,626 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:17:33,515 - INFO - Successfully marked student ID 93 as present for period 17
+2025-03-09 09:17:33,515 - INFO - Recognized and marked student ID 93 for period 17
+2025-03-09 09:17:39,700 - INFO - Successfully marked student ID 104 as present for period 17
+2025-03-09 09:17:39,700 - INFO - Recognized and marked student ID 104 for period 17
+2025-03-09 09:17:40,895 - INFO - Successfully marked student ID 102 as present for period 17
+2025-03-09 09:17:40,896 - INFO - Recognized and marked student ID 102 for period 17
+2025-03-09 09:17:50,563 - INFO - User exited attendance marking after 0.3 minutes.
+2025-03-09 09:17:50,566 - INFO - Marked 11 students as absent for period 17
+2025-03-09 09:19:25,125 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:19:46,681 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:19:53,474 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:20:01,473 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:24:33,287 - INFO - Successfully marked student ID 93 as present for period 18
+2025-03-09 09:24:33,288 - INFO - Recognized and marked student ID 93 for period 18
+2025-03-09 09:24:38,544 - INFO - Successfully marked student ID 102 as present for period 18
+2025-03-09 09:24:38,545 - INFO - Recognized and marked student ID 102 for period 18
+2025-03-09 09:24:45,546 - INFO - Successfully marked student ID 104 as present for period 18
+2025-03-09 09:24:45,546 - INFO - Recognized and marked student ID 104 for period 18
+2025-03-09 09:24:52,283 - INFO - User exited attendance marking after 0.3 minutes.
+2025-03-09 09:24:52,288 - INFO - Marked 11 students as absent for period 18
+2025-03-09 09:31:37,882 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:31:51,409 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:32:05,321 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:05,326 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:08,613 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:08,620 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:09,396 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:09,402 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:10,030 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:10,035 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:10,414 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:10,420 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:10,633 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:10,639 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:10,799 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:10,804 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:11,159 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:11,164 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:11,371 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:11,377 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:11,685 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:11,690 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:11,783 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:11,790 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:11,967 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 09:32:11,972 - INFO - No unmarked students to mark as absent for period 14
+2025-03-09 09:32:39,932 - INFO - Successfully marked student ID 93 as present for period 19
+2025-03-09 09:32:39,933 - INFO - Recognized and marked student ID 93 for period 19
+2025-03-09 09:32:45,224 - INFO - Successfully marked student ID 104 as present for period 19
+2025-03-09 09:32:45,224 - INFO - Recognized and marked student ID 104 for period 19
+2025-03-09 09:32:52,408 - WARNING - No faces detected in the current frame.
+2025-03-09 09:32:57,212 - INFO - Successfully marked student ID 102 as present for period 19
+2025-03-09 09:32:57,212 - INFO - Recognized and marked student ID 102 for period 19
+2025-03-09 09:33:04,058 - WARNING - Screen detected: Edges=False, Texture=True, Color=True
+2025-03-09 09:33:12,747 - WARNING - Screen detected: Edges=False, Texture=True, Color=True
+2025-03-09 09:33:29,302 - ERROR - Error processing face with MTCNN: torch.cat(): expected a non-empty list of Tensors
+2025-03-09 09:35:08,188 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:35:23,092 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:35:32,206 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:36:16,153 - INFO - Student ID 93 already marked with status present for period 19
+2025-03-09 09:36:16,154 - INFO - Recognized and marked student ID 93 for period 19
+2025-03-09 09:36:20,993 - INFO - Student ID 104 already marked with status present for period 19
+2025-03-09 09:36:20,993 - INFO - Recognized and marked student ID 104 for period 19
+2025-03-09 09:36:23,705 - INFO - Successfully marked student ID 101 as present for period 19
+2025-03-09 09:36:23,705 - INFO - Recognized and marked student ID 101 for period 19
+2025-03-09 09:36:31,411 - INFO - Student ID 102 already marked with status present for period 19
+2025-03-09 09:36:31,411 - INFO - Recognized and marked student ID 102 for period 19
+2025-03-09 09:36:32,177 - INFO - Successfully marked student ID 91 as present for period 19
+2025-03-09 09:36:32,177 - INFO - Recognized and marked student ID 91 for period 19
+2025-03-09 09:36:32,751 - INFO - Successfully marked student ID 92 as present for period 19
+2025-03-09 09:36:32,752 - INFO - Recognized and marked student ID 92 for period 19
+2025-03-09 09:36:39,122 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,243 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,341 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,442 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,539 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,631 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,835 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:39,928 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,010 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,115 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,202 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,284 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,374 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,474 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,567 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,677 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,772 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,853 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:40,938 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:41,416 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:41,584 - INFO - Successfully marked student ID 89 as present for period 19
+2025-03-09 09:36:41,584 - INFO - Recognized and marked student ID 89 for period 19
+2025-03-09 09:36:41,741 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:41,825 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:41,915 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:42,003 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:42,150 - INFO - Successfully marked student ID 96 as present for period 19
+2025-03-09 09:36:42,150 - INFO - Recognized and marked student ID 96 for period 19
+2025-03-09 09:36:42,844 - ERROR - Error processing face with MTCNN: torch.cat(): expected a non-empty list of Tensors
+2025-03-09 09:36:42,846 - ERROR - Error processing face with MTCNN: torch.cat(): expected a non-empty list of Tensors
+2025-03-09 09:36:43,417 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:43,505 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:43,606 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:43,694 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:43,782 - WARNING - No faces detected in the current frame.
+2025-03-09 09:36:43,873 - WARNING - No faces detected in the current frame.
+2025-03-09 09:37:00,975 - INFO - User exited attendance marking after 0.8 minutes.
+2025-03-09 09:37:33,369 - INFO - Loaded classifier with 14 classes: ['770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel']
+2025-03-09 09:39:25,988 - INFO - Successfully marked student ID 93 as present for period 21
+2025-03-09 09:39:25,988 - INFO - Recognized and marked student ID 93 for period 21
+2025-03-09 09:39:26,083 - INFO - Successfully marked student ID 104 as present for period 21
+2025-03-09 09:39:26,084 - INFO - Recognized and marked student ID 104 for period 21
+2025-03-09 09:39:35,175 - INFO - Successfully marked student ID 90 as present for period 21
+2025-03-09 09:39:35,175 - INFO - Recognized and marked student ID 90 for period 21
+2025-03-09 09:39:46,068 - INFO - User exited attendance marking after 0.4 minutes.
+2025-03-09 09:39:46,068 - INFO - Marked 11 students as absent for period 21
+2025-03-09 10:38:43,906 - INFO - Preparing training data...
+2025-03-09 10:39:04,091 - INFO - Starting model training...
+2025-03-09 10:39:09,421 - INFO - Updated class_names after training: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '784878-Shiv_Pd_Mahato']
+2025-03-09 10:40:14,272 - INFO - Period 14 has ended at 2025-03-08 19:13:00. Marking all unmarked students as absent.
+2025-03-09 10:40:14,287 - INFO - Marked 2 students as absent for period 14
+2025-03-09 10:40:30,659 - INFO - Successfully marked student ID 105 as present for period 22
+2025-03-09 10:40:30,661 - INFO - Recognized and marked student ID 105 for period 22
+2025-03-09 10:40:33,625 - INFO - Successfully marked student ID 106 as present for period 22
+2025-03-09 10:40:33,625 - INFO - Recognized and marked student ID 106 for period 22
+2025-03-09 10:40:41,614 - WARNING - No faces detected in the current frame.
+2025-03-09 10:40:41,697 - WARNING - No faces detected in the current frame.
+2025-03-09 10:40:41,792 - WARNING - No faces detected in the current frame.
+2025-03-09 10:40:46,680 - WARNING - No faces detected in the current frame.
+2025-03-09 10:40:48,450 - INFO - User exited attendance marking after 0.3 minutes.
+2025-03-09 10:40:48,457 - INFO - Marked 14 students as absent for period 22
+2025-03-09 10:41:39,795 - INFO - Marked attendance for student ID 105 in period 22: absent
+2025-03-09 12:03:09,299 - INFO - Preparing training data...
+2025-03-09 12:04:38,194 - INFO - Starting model training...
+2025-03-09 12:04:42,776 - INFO - Updated class_names after training: ['770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770310-Deepesh_Shrestha', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770320-Nabraj_Joshi', '770325-Piyush_Gwayamaru', '770330-Rashik_Prajapati', '770348-Yubaraj_Poudel']
+2025-03-09 12:07:07,660 - INFO - Loaded classifier with 12 classes: ['770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770310-Deepesh_Shrestha', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770320-Nabraj_Joshi', '770325-Piyush_Gwayamaru', '770330-Rashik_Prajapati', '770348-Yubaraj_Poudel']
+2025-03-09 12:07:13,169 - INFO - Loaded classifier with 12 classes: ['770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770310-Deepesh_Shrestha', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770320-Nabraj_Joshi', '770325-Piyush_Gwayamaru', '770330-Rashik_Prajapati', '770348-Yubaraj_Poudel']
+2025-03-09 12:09:18,017 - INFO - Successfully marked student ID 117 as present for period 23
+2025-03-09 12:09:18,017 - INFO - Recognized and marked student ID 117 for period 23
+2025-03-09 12:09:21,027 - INFO - Successfully marked student ID 114 as present for period 23
+2025-03-09 12:09:21,027 - INFO - Recognized and marked student ID 114 for period 23
+2025-03-09 12:09:24,513 - INFO - Successfully marked student ID 110 as present for period 23
+2025-03-09 12:09:24,513 - INFO - Recognized and marked student ID 110 for period 23
+2025-03-09 12:09:31,183 - ERROR - Error processing face with MTCNN: torch.cat(): expected a non-empty list of Tensors
+2025-03-09 12:09:31,696 - INFO - Successfully marked student ID 116 as present for period 23
+2025-03-09 12:09:31,711 - INFO - Recognized and marked student ID 116 for period 23
+2025-03-09 12:09:36,720 - INFO - User exited attendance marking after 0.3 minutes.
+2025-03-09 12:09:36,735 - INFO - Marked 8 students as absent for period 23
+2025-03-09 12:10:52,269 - INFO - Preparing training data for re-training...
+2025-03-09 12:10:52,470 - INFO - Starting model re-training...
+2025-03-09 12:11:00,356 - INFO - Re-trained model with 12 classes: ['770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770310-Deepesh_Shrestha', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770318-Kritima_Shrestha', '770319-Manish_Timsina', '770320-Nabraj_Joshi', '770325-Piyush_Gwayamaru', '770330-Rashik_Prajapati', '770348-Yubaraj_Poudel']

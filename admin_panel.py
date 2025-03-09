@@ -371,7 +371,6 @@ def manage_periods():
     return render_template('admin/periods.html', periods=periods, courses=courses)
 
 
-# Attendance Management
 @admin_bp.route('/admin/attendance/<int:period_id>', methods=['GET', 'POST'])
 def manage_attendance(period_id):
     connection = get_db_connection()
@@ -380,12 +379,17 @@ def manage_attendance(period_id):
     if connection:
         try:
             with connection.cursor() as cursor:
+                # Modify the query to format timestamp in AM/PM
+                # For PostgreSQL:
                 cursor.execute("""
-                    SELECT s.first_name, s.middle_name, s.last_name, s.rollno, a.status, a.recorded_timestamp
+                    SELECT s.first_name, s.middle_name, s.last_name, s.rollno, a.status, 
+                           TO_CHAR(a.recorded_timestamp, 'YYYY-MM-DD HH12:MI:SS AM') AS recorded_timestamp
                     FROM Attendance a
                     JOIN Students s ON a.student_id = s.student_id
                     WHERE a.period_id = %s
                 """, (period_id,))
+                
+                # For MySQL:
                 records = cursor.fetchall()
 
                 cursor.execute("""
@@ -454,7 +458,6 @@ def manage_attendance(period_id):
 
     students = get_all_students()
     return render_template('admin/attendance.html', records=records, period_id=period_id, course_name=course_name, students=students)
-
 
 # System Monitoring
 @admin_bp.route('/admin/monitor')

@@ -18,17 +18,18 @@
 
     <div id="attendance-records">
         <h3 id="attendance-heading">Attendance Record</h3>
-        <table id="attendance-table" style="display: none;">
-            <tr>
-                <th>First Name</th>
-                <th>Middle Name</th>
-                <th>Last Name</th>
-                <th>Roll No</th>
-                <th>Status</th>
-                <th>Timestamp</th>
+        <div id="message"></div> <!-- General message area -->
+        <div id="screen-detection-message" style="color: red; font-size: 14px; margin-top: 5px;"></div> <!-- Screen detection feedback -->
+        <table id="attendance-table" style="display: none; width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <tr style="background-color: #f2f2f2;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">First Name</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Middle Name</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Last Name</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Roll No</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Status</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Timestamp</th>
             </tr>
         </table>
-        <div id="message"></div>
     </div>
 
     <!-- Include jQuery and script.js -->

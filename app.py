@@ -11,6 +11,7 @@ from facial_recognition.src.align_dataset import align_images
 from facial_recognition.src.train_model import prepare_training_data, train_classifier, Classifier
 from facial_recognition.src.populate_databse import populate_students
 import psycopg2
+from scipy.stats import entropy
 from psycopg2 import Error
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
@@ -186,6 +187,7 @@ def mark_attendance(student_id, period_id, connection, is_within_time_limit):
         logger.error(f"Error marking attendance for student ID {student_id}: {e}")
         connection.rollback()
 
+
 @app.route('/mark_attendance/<int:period_id>', methods=['POST'])
 def mark_attendance_route(period_id):
     global classifier, class_names, num_classes
@@ -267,6 +269,57 @@ def mark_attendance_route(period_id):
     recognized_students = set()
     start_time = time.time()
 
+    def is_screen_detected(frame, box):
+        """Robust screen detection using edge detection, texture analysis, and color uniformity."""
+        x1, y1, x2, y2 = [int(coord) for coord in box]
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
+        
+        # Extract region of interest (ROI) with padding
+        padding = 50
+        roi_x1, roi_y1 = max(0, x1 - padding), max(0, y1 - padding)
+        roi_x2, roi_y2 = min(frame.shape[1], x2 + padding), min(frame.shape[0], y2 + padding)
+        roi = frame[roi_y1:roi_y2, roi_x1:roi_x2]
+
+        if roi.size == 0:
+            return False
+
+        # Convert to grayscale for edge and texture analysis
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+
+        # 1. Edge Detection: Check for strong rectangular edges (screen-like)
+        edges = cv2.Canny(gray, 50, 150)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        screen_detected_by_edges = False
+        if contours:
+            largest_contour = max(contours, key=cv2.contourArea)
+            if cv2.contourArea(largest_contour) > 1000:  # Larger threshold for robustness
+                x, y, w, h = cv2.boundingRect(largest_contour)
+                aspect_ratio = w / h
+                if 0.5 < aspect_ratio < 2.0 and w > 150 and h > 150:  # Typical screen aspect ratios
+                    screen_detected_by_edges = True
+                    logger.debug(f"Edge detection suggests screen: AR={aspect_ratio:.2f}, w={w}, h={h}")
+
+        # 2. Texture Analysis: Check entropy (screens have lower texture variation)
+        hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
+        hist_entropy = entropy(hist.ravel())
+        low_texture = hist_entropy < 5.0  # Lower entropy suggests uniform texture (screen-like)
+        logger.debug(f"Texture entropy: {hist_entropy:.2f}, Low texture: {low_texture}")
+
+        # 3. Color Uniformity: Check variance in color channels (screens tend to be uniform)
+        roi_rgb = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+        color_variance = np.var(roi_rgb, axis=(0, 1))
+        uniform_color = all(var < 1000 for var in color_variance)  # Low variance suggests screen
+        logger.debug(f"Color variance: {color_variance}, Uniform: {uniform_color}")
+
+        # Decision: Combine multiple indicators
+        screen_indicators = sum([screen_detected_by_edges, low_texture, uniform_color])
+        is_screen = screen_indicators >= 2  # Require at least 2 out of 3 indicators
+        if is_screen:
+            logger.warning(f"Screen detected: Edges={screen_detected_by_edges}, Texture={low_texture}, Color={uniform_color}")
+        
+        return is_screen
+
     while True:
         elapsed_time = time.time() - start_time
         if elapsed_time > time_limit:
@@ -286,6 +339,12 @@ def mark_attendance_route(period_id):
                 x1, y1, x2, y2 = [int(coord) for coord in box]
                 x1, y1 = max(0, x1), max(0, y1)
                 x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
+
+                # Check if the face is on a screen
+                if is_screen_detected(frame, box):
+                    cv2.putText(frame, "Screen Detected - No Attendance", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                    continue  # Skip attendance marking for this face
 
                 face = frame_rgb[y1:y2, x1:x2]
                 if face.size == 0 or face.shape[0] <= 0 or face.shape[1] <= 0:
@@ -373,6 +432,8 @@ def mark_attendance_route(period_id):
         "absent_message": absent_message,
         "recognized_count": len(recognized_students)
     })
+
+
 
 @app.route('/')
 def index():
@@ -553,7 +614,7 @@ def get_attendance(period_id):
 
     attendance_data = {
         "course_name": course_name,
-        "date": subject_date.strftime("%Y-%m-d") if subject_date else "N/A",
+        "date": subject_date.strftime("%Y-%m-%d") if subject_date else "N/A",
         "records": [
             {
                 "first_name": r[0],
@@ -567,6 +628,7 @@ def get_attendance(period_id):
         ]
     }
     return jsonify(attendance_data)
+
 
 @app.route('/attendance', methods=['GET', 'POST'])
 def attendance():

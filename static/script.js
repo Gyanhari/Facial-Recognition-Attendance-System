@@ -4,10 +4,12 @@ $(document).ready(function () {
     var period_id = $("#period_id").val();
     if (!period_id) {
       $("#message").text("Please select a period.").addClass("error");
+      $("#screen-detection-message").text("");
       return;
     }
 
     $("#message").text("Starting attendance marking...").removeClass("error");
+    $("#screen-detection-message").text("");
     $.ajax({
       url: "/mark_attendance/" + period_id,
       type: "POST",
@@ -15,23 +17,26 @@ $(document).ready(function () {
       success: function (data) {
         if (data.status === "success") {
           $("#message")
-            .text(
-              data.message +
-                " " +
-                data.absent_message +
-                " Recognized: " +
-                data.recognized_count
-            )
+            .text(data.message + " " + data.absent_message + " Recognized: " + data.recognized_count)
             .removeClass("error");
-          $("#view-attendance").click();
+          if (data.screen_detected_count > 0) {
+            $("#screen-detection-message").text(
+              "Warning: Skipped " + data.screen_detected_count + " face(s) detected on screens."
+            );
+          } else {
+            $("#screen-detection-message").text("No screens detected.");
+          }
+          $("#view-attendance").click(); // Auto-refresh attendance view
         } else {
           $("#message").text(data.message).addClass("error");
+          $("#screen-detection-message").text("");
         }
       },
       error: function (xhr, status, error) {
         $("#message")
           .text("Error triggering attendance: " + error)
           .addClass("error");
+        $("#screen-detection-message").text("");
         console.log("Error:", error);
       },
     });
@@ -42,6 +47,7 @@ $(document).ready(function () {
     var period_id = $("#period_id").val();
     if (!period_id) {
       $("#message").text("Please select a period.").addClass("error");
+      $("#screen-detection-message").text("");
       return;
     }
 
@@ -57,27 +63,27 @@ $(document).ready(function () {
           );
           $("#attendance-table").show();
           var headerRow =
-            "<tr><th>First Name</th><th>Middle Name</th><th>Last Name</th><th>Roll No</th><th>Status</th><th>Timestamp</th></tr>";
+            "<tr style='background-color: #f2f2f2;'><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>First Name</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Middle Name</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Last Name</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Roll No</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Status</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Timestamp</th></tr>";
           $("#attendance-table").append(headerRow);
           $.each(data.records, function (index, record) {
             var row =
               "<tr>" +
-              "<td>" +
+              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
               record.first_name +
               "</td>" +
-              "<td>" +
+              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
               record.middle_name +
               "</td>" +
-              "<td>" +
+              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
               record.last_name +
               "</td>" +
-              "<td>" +
+              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
               record.roll_no +
               "</td>" +
-              "<td>" +
+              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
               record.status +
               "</td>" +
-              "<td>" +
+              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
               record.timestamp +
               "</td>" +
               "</tr>";
@@ -98,6 +104,7 @@ $(document).ready(function () {
         $("#message")
           .text("Error fetching attendance: " + error)
           .addClass("error");
+        $("#screen-detection-message").text("");
         console.log("Error:", error);
       },
     });
