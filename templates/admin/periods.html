@@ -1,154 +1,210 @@
 {% extends "admin/layout.html" %}
 {% block title %}Manage Periods{% endblock %}
 {% block content %}
-<h2>Manage Periods</h2>
+<div class="content-card card shadow-sm p-4">
+    <h2 class="card-title mb-4 text-center text-dark">Manage Periods</h2>
 
-<h3>Add Period</h3>
-<form method="POST" id="addPeriodForm">
-    <input type="hidden" name="action" value="add">
-    <label>Semester: 
-        <select name="semester" id="semesterSelect" required onchange="filterCourses()">
-            <option value="">Select Semester</option>
-            {% for sem in range(1, 9) %}
-                <option value="{{ sem }}">{{ sem }}</option>
-            {% endfor %}
-        </select>
-    </label><br>
-    <label>Course: 
-        <select name="course_id" id="courseSelect" required disabled>
-            <option value="">Select Semester First</option>
-        </select>
-    </label><br>
-    <label>Date: <input type="date" name="period_date" required disabled></label><br>
-    <label>Start Time: <input type="time" name="start_time" required disabled></label><br>
-    <label>Duration (minutes): <input type="number" name="duration" min="45" max="120" required disabled></label><br>
-    <button type="submit" id="addPeriodButton" disabled>Add Period</button>
-</form>
+    <h3 class="mt-4 mb-3">Add Period</h3>
+    <form method="POST" id="addPeriodForm" class="mb-4 needs-validation" novalidate>
+        <input type="hidden" name="action" value="add">
+        <div class="mb-3">
+            <label for="semesterSelect" class="form-label">Semester:</label>
+            <select name="semester" id="semesterSelect" class="form-select" required onchange="filterCourses()">
+                <option value="">Select Semester</option>
+                {% for sem in range(1, 9) %}
+                    <option value="{{ sem }}">{{ sem }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select a semester.</div>
+        </div>
+        <div class="mb-3">
+            <label for="courseSelect" class="form-label">Course:</label>
+            <select name="course_id" id="courseSelect" class="form-select" required disabled>
+                <option value="">Select Course</option>
+            </select>
+            <div class="invalid-feedback">Please select a course.</div>
+        </div>
+        <div class="mb-3">
+            <label for="period_date" class="form-label">Date:</label>
+            <input type="date" name="period_date" id="period_date" class="form-control" required disabled>
+            <div class="invalid-feedback">Please select a date.</div>
+        </div>
+        <div class="mb-3">
+            <label for="start_time" class="form-label">Start Time:</label>
+            <input type="time" name="start_time" id="start_time" class="form-control" required disabled>
+            <div class="invalid-feedback">Please select a start time.</div>
+        </div>
+        <div class="mb-3">
+            <label for="duration" class="form-label">Duration (minutes):</label>
+            <input type="number" name="duration" id="duration" class="form-control" min="45" max="120" required disabled>
+            <div class="invalid-feedback">Duration must be between 45 and 120 minutes.</div>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="completed" id="completedAdd" class="form-check-input" disabled>
+            <label for="completedAdd" class="form-check-label">Completed</label>
+        </div>
+        <button type="submit" id="addPeriodButton" class="btn btn-primary w-100 mb-3" disabled>Add Period</button>
+    </form>
 
-<h3>Existing Periods</h3>
-<div>
-    <label for="date_filter">Filter by Date:</label>
-    <input type="date" id="date_filter" name="date_filter" onchange="filterPeriods()">
+    <h3 class="mt-4 mb-3">Existing Periods</h3>
+    <div class="mb-3 d-flex gap-3">
+        <div class="flex-grow-1">
+            <label for="date_filter" class="form-label">Filter by Date:</label>
+            <input type="date" id="date_filter" name="date_filter" class="form-control" value="{{ filter_date }}" onchange="applyFilters()">
+        </div>
+        <div class="flex-grow-1">
+            <label for="completed_filter" class="form-label">Filter by Completion Status:</label>
+            <select id="completed_filter" class="form-select" onchange="applyFilters()">
+                <option value="all" {% if filter_completed == 'all' %}selected{% endif %}>All</option>
+                <option value="completed" {% if filter_completed == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="not_completed" {% if filter_completed == 'not_completed' %}selected{% endif %}>Not Completed</option>
+            </select>
+        </div>
+    </div>
+    {% if periods %}
+    <div class="table-responsive">
+        <table id="periods_table" class="table table-striped table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">S.N.</th>
+                    <th scope="col">Course Name</th>
+                    <th scope="col">Semester</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Start Time</th>
+                    <th scope="col">Duration (minutes)</th>
+                    <th scope="col">Completed</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for period in periods %}
+                <tr data-date="{{ period[2] }}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ period[1] }}</td>
+                    <td>{{ period[5] }}</td>
+                    <td>{{ period[2] }}</td>
+                    <td>{{ period[3] }}</td>
+                    <td>{{ period[4] }}</td>
+                    <td>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="action" value="edit">
+                            <input type="hidden" name="period_id" value="{{ period[0] }}">
+                            <input type="hidden" name="course_id" value="{{ period[7] }}">
+                            <input type="hidden" name="period_date" value="{{ period[2] }}">
+                            <input type="hidden" name="start_time" value="{{ period[3] }}">
+                            <input type="hidden" name="duration" value="{{ period[4] }}">
+                            <input type="checkbox" name="completed" {% if period[6] %}checked{% endif %} onchange="this.form.submit()">
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" style="display:inline;" class="me-2">
+                            <input type="hidden" name="action" value="edit">
+                            <input type="hidden" name="period_id" value="{{ period[0] }}">
+                            <div class="mb-2">
+                                <label for="course_id_{{ period[0] }}" class="form-label">Course:</label>
+                                <select name="course_id" id="course_id_{{ period[0] }}" class="form-select" required>
+                                    <option value="">Select Course</option>
+                                    {% for course in courses %}
+                                        <option value="{{ course[0] }}" {% if course[0] == period[7] %}selected{% endif %}>
+                                            {{ course[1] }} (Semester {{ course[3] }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label for="period_date_{{ period[0] }}" class="form-label">Date:</label>
+                                <input type="date" name="period_date" id="period_date_{{ period[0] }}" class="form-control" value="{{ period[2] }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label for="start_time_{{ period[0] }}" class="form-label">Start Time:</label>
+                                <input type="time" name="start_time" id="start_time_{{ period[0] }}" class="form-control" value="{{ period[3] }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label for="duration_{{ period[0] }}" class="form-label">Duration:</label>
+                                <input type="number" name="duration" id="duration_{{ period[0] }}" class="form-control" value="{{ period[4] }}" min="45" max="120" required>
+                            </div>
+                            <div class="mb-2 form-check">
+                                <input type="checkbox" name="completed" id="completed_{{ period[0] }}" class="form-check-input" {% if period[6] %}checked{% endif %}>
+                                <label for="completed_{{ period[0] }}" class="form-check-label">Completed</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm" {% if period[6] %}disabled{% endif %}>Update</button>
+                        </form>
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this period?');">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="period_id" value="{{ period[0] }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                        {% if period[6] %}
+                            <span class="text-muted ms-2">Attendance Locked</span>
+                        {% else %}
+                            <a href="{{ url_for('admin.manage_attendance', period_id=period[0]) }}" class="btn btn-sm btn-primary ms-2">View Attendance</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No periods available.</p>
+    {% endif %}
 </div>
-{% if periods %}
-<table id="periods_table">
-    <thead>
-        <tr>
-            <th>S.N.</th>
-            <th>Course Name</th>
-            <th>Semester</th>
-            <th>Date</th>
-            <th>Start Time</th>
-            <th>Duration (minutes)</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for period in periods %}
-        <tr data-date="{{ period[2] }}">
-            <td>{{ loop.index }}</td>
-            <td>{{ period[1] }}</td>
-            <td>{{ period[5] }}</td>
-            <td>{{ period[2] }}</td>
-            <td>{{ period[3] }}</td>
-            <td>{{ period[4] }}</td>
-            <td>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="action" value="edit">
-                    <input type="hidden" name="period_id" value="{{ period[0] }}">
-                    <label>Course: 
-                        <select name="course_id" required>
-                            {% for course in courses %}
-                                <option value="{{ course[0] }}" {% if course[1] == period[1] %}selected{% endif %}>
-                                    {{ course[1] }} (Semester {{ course[3] }})
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </label><br>
-                    <label>Date: <input type="date" name="period_date" value="{{ period[2] }}" required></label><br>
-                    <label>Start Time: <input type="time" name="start_time" value="{{ period[3] }}" required></label><br>
-                    <label>Duration: <input type="number" name="duration" value="{{ period[4] }}" min="45" max="120" required></label><br>
-                    <button type="submit">Update</button>
-                </form>
-                <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this period?');">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="period_id" value="{{ period[0] }}">
-                    <button type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No periods available.</p>
-{% endif %}
 
 <script>
-    // Store courses data as a JavaScript object for filtering
-    const courses = {
-        {% for course in courses %}
-            {{ course[3] }}: [
-                {"id": "{{ course[0] }}", "name": "{{ course[1] }} (Semester {{ course[3] }})"}
-            ]{% if not loop.last %},{% endif %}
-        {% endfor %}
-    };
+const coursesBySemester = {};
+{% for course in courses %}
+    if (!coursesBySemester[{{ course[3] }}]) {
+        coursesBySemester[{{ course[3] }}] = [];
+    }
+    coursesBySemester[{{ course[3] }}].push({"id": "{{ course[0] }}", "name": "{{ course[1] }} (Semester {{ course[3] }})"});
+{% endfor %}
 
-    function filterCourses() {
-        const semesterSelect = document.getElementById('semesterSelect');
-        const courseSelect = document.getElementById('courseSelect');
-        const selectedSemester = semesterSelect.value;
-        const dateInput = document.querySelector('input[name="period_date"]');
-        const timeInput = document.querySelector('input[name="start_time"]');
-        const durationInput = document.querySelector('input[name="duration"]');
-        const addPeriodButton = document.getElementById('addPeriodButton');
+function filterCourses() {
+    const semesterSelect = document.getElementById('semesterSelect');
+    const courseSelect = document.getElementById('courseSelect');
+    const dateInput = document.getElementById('period_date');
+    const timeInput = document.getElementById('start_time');
+    const durationInput = document.getElementById('duration');
+    const completedCheckbox = document.getElementById('completedAdd');
+    const addPeriodButton = document.getElementById('addPeriodButton');
 
-        // Clear current options
-        courseSelect.innerHTML = '<option value="">Select Course</option>';
+    courseSelect.innerHTML = '<option value="">Select Course</option>';
 
-        // Enable/disable form fields based on semester selection
-        if (selectedSemester) {
-            courseSelect.disabled = false;
-            dateInput.disabled = false;
-            timeInput.disabled = false;
-            durationInput.disabled = false;
-            addPeriodButton.disabled = false;
+    if (semesterSelect.value) {
+        courseSelect.disabled = false;
+        dateInput.disabled = false;
+        timeInput.disabled = false;
+        durationInput.disabled = false;
+        completedCheckbox.disabled = false;
+        addPeriodButton.disabled = false;
 
-            // Filter and populate courses for the selected semester
-            if (courses[selectedSemester]) {
-                courses[selectedSemester].forEach(course => {
-                    const option = document.createElement('option');
-                    option.value = course.id;
-                    option.textContent = course.name;
-                    courseSelect.appendChild(option);
-                });
-            }
-        } else {
-            courseSelect.disabled = true;
-            dateInput.disabled = true;
-            timeInput.disabled = true;
-            durationInput.disabled = true;
-            addPeriodButton.disabled = true;
+        if (coursesBySemester[semesterSelect.value]) {
+            coursesBySemester[semesterSelect.value].forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.id;
+                option.textContent = course.name;
+                courseSelect.appendChild(option);
+            });
         }
+    } else {
+        courseSelect.disabled = true;
+        dateInput.disabled = true;
+        timeInput.disabled = true;
+        durationInput.disabled = true;
+        completedCheckbox.disabled = true;
+        addPeriodButton.disabled = true;
     }
+}
 
-    function filterPeriods() {
-        const selectedDate = document.getElementById("date_filter").value;
-        const rows = document.querySelectorAll("#periods_table tbody tr");
+function applyFilters() {
+    const selectedDate = document.getElementById("date_filter").value;
+    const filterCompleted = document.getElementById("completed_filter").value;
+    const url = new URL(window.location);
+    url.searchParams.set('filter_date', selectedDate);
+    url.searchParams.set('filter_completed', filterCompleted);
+    window.location.href = url.toString();
+}
 
-        rows.forEach(row => {
-            const rowDate = row.getAttribute("data-date");
-            if (!selectedDate || rowDate === selectedDate) {
-                row.style.display = ""; // Show row
-            } else {
-                row.style.display = "none"; // Hide row
-            }
-        });
-    }
-
-    // Initialize filter on page load
-    filterPeriods();
-    // Initial call to filter courses (in case a semester is pre-selected)
-    filterCourses();
+filterCourses();
 </script>
 {% endblock %}

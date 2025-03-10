@@ -16,9 +16,13 @@ from psycopg2 import Error
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 import torch.nn as nn
+from facial_recognition.src.helper import admin_required
 import pandas as pd
 import logging
+from functools import wraps
 import pickle
+from flask_bcrypt import Bcrypt  # Add this import
+from teacher_panel import teacher_bp, init_bcrypt
 from admin_panel import admin_bp
 from teacher_panel import teacher_bp
 
@@ -43,6 +47,8 @@ logger.addHandler(console_handler)
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
+bcrypt = Bcrypt(app)  # Initialize Bcrypt with app
+init_bcrypt(app)
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(teacher_bp, url_prefix='/teacher')
 
@@ -120,6 +126,7 @@ def get_db_connection():
     except Error as e:
         logger.error(f"Error connecting to database: {e}")
         return None
+
 
 def load_uploaded_users():
     uploaded_users = set()
@@ -488,10 +495,12 @@ def view_attendance(period_id):
     return jsonify({"status": "error", "message": "No attendance records found or access denied."}), 404
 
 @app.route('/')
+@admin_required
 def index():
     return redirect(url_for('capture'))
 
 @app.route('/capture', methods=['GET', 'POST'])
+@admin_required
 def capture():
     if request.method == 'POST':
         name = request.form['name'].strip()
@@ -548,6 +557,7 @@ def capture():
     return render_template('capture.html')
 
 @app.route('/align', methods=['GET', 'POST'])
+@admin_required
 def align():
     if request.method == 'POST':
         result = align_images(config)
@@ -556,6 +566,7 @@ def align():
     return render_template('align.html')
 
 @app.route('/populate', methods=['GET', 'POST'])
+@admin_required
 def populate():
     if request.method == 'POST':
         result = populate_students()
@@ -564,27 +575,33 @@ def populate():
     return render_template('populate.html')
 
 @app.route('/course', methods=['GET', 'POST'])
+@admin_required
 def course():
     connection = get_db_connection()
     courses = []
+    teachers = []
     if connection:
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT course_id, course_name, semester FROM Courses ORDER BY semester, course_name")
                 courses = cursor.fetchall()
+                cursor.execute("SELECT teacher_id, first_name, last_name, email FROM Teachers ORDER BY last_name, first_name")
+                teachers = cursor.fetchall()
         finally:
             connection.close()
 
     if request.method == 'POST':
+        # Existing POST logic unchanged, just ensure admin access
         course_option = request.form['course_option']
         start_time = request.form['start_time']
         period_date = request.form['period_date']
         duration = request.form.get('duration', '').strip()
-        semester = request.form.get('semester')  # Get semester from form
+        semester = request.form.get('semester')
+        teacher_id = request.form.get('teacher_id')
 
         try:
             duration = int(duration)
-            if duration < 45 or duration > 90:  # Matches template's min/max
+            if duration < 45 or duration > 90:
                 flash("Duration must be between 45 and 90 minutes.", "error")
                 return redirect(url_for('course'))
         except ValueError:
@@ -612,21 +629,20 @@ def course():
                         (course_name, f"{course_name[:3].upper()}101", semester)
                     )
                     course_id = cursor.fetchone()[0]
+                    cursor.execute(
+                        "INSERT INTO Course_Teacher (course_id, teacher_id) VALUES (%s, %s)",
+                        (course_id, teacher_id)
+                    )
                     flash(f"New course {course_name} (Semester {semester}) added successfully.", "success")
                 else:
                     course_id = course_option
-                    cursor.execute("SELECT course_name FROM Courses WHERE course_id = %s", (course_id,))
-                    course_name = cursor.fetchone()[0]
 
                 cursor.execute(
-                    """
-                    INSERT INTO Class_Periods (course_id, period_date, start_time, duration)
-                    VALUES (%s, %s, %s, %s)
-                    """,
+                    "INSERT INTO Class_Periods (course_id, period_date, start_time, duration) VALUES (%s, %s, %s, %s)",
                     (course_id, period_date, start_time, duration)
                 )
                 connection.commit()
-                flash(f"Class period for {course_name} on {period_date} at {start_time} with duration {duration} minutes added successfully.", "success")
+                flash("Class period added successfully.", "success")
         except Exception as e:
             connection.rollback()
             flash(f"Error adding class period: {str(e)}", "error")
@@ -635,7 +651,7 @@ def course():
 
         return redirect(url_for('course'))
 
-    return render_template('course.html', courses=courses)
+    return render_template('course.html', courses=courses, teachers=teachers)
 
 @app.route('/get_attendance/<int:period_id>', methods=['GET'])
 def get_attendance(period_id):

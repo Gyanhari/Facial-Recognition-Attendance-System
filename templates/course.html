@@ -1,110 +1,126 @@
-{% extends "index.html" %} {% block content %}
+{% extends "index.html" %}
+{% block content %}
 <div class="content-card">
   <h2>Add Course or Class Period</h2>
-  <form action="{{ url_for('course') }}" method="post">
-    <!-- Semester Selection -->
-    <label for="semester">Semester:</label>
-    <select id="semester" name="semester" required onchange="filterCourses()">
-      <option value="">-- Select a Semester --</option>
-      {% for i in range(1, 9) %}
-      <option value="{{ i }}">{{ i }}</option>
-      {% endfor %}
-    </select>
+  {% if session['teacher_id'] and session['is_admin'] %}
+    {% if session['teacher_name'] %}
+      <p>Adding as: {{ session['teacher_name'] }}</p>
+    {% endif %}
+    
+    <form action="{{ url_for('course') }}" method="post">
+      <!-- Semester Selection -->
+      <label for="semester">Semester:</label>
+      <select id="semester" name="semester" required onchange="filterCourses()">
+        <option value="">-- Select a Semester --</option>
+        {% for i in range(1, 9) %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
 
-    <!-- Course Option -->
-    <label for="course_option">Course:</label>
-    <select
-      id="course_option"
-      name="course_option"
-      required
-      onchange="toggleCourseName()"
-    >
-      <option value="">-- Select a Course --</option>
-      <option value="new">Add New Course</option>
-      {% for course in courses %}
-      <option value="{{ course[0] }}" data-semester="{{ course[2] }}">
-        {{ course[1] }}
-      </option>
-      {% endfor %}
-    </select>
+      <!-- Teacher Selection -->
+      <label for="teacher_id">Assign Teacher:</label>
+      <select id="teacher_id" name="teacher_id" required>
+        <option value="">-- Select a Teacher --</option>
+        {% for teacher in teachers %}
+          <option value="{{ teacher[0] }}">{{ teacher[1] }} {{ teacher[2] }} ({{ teacher[3] }})</option>
+        {% endfor %}
+      </select>
 
-    <!-- New Course Fields -->
-    <div id="new_course_field" style="display: none">
-      <label for="course_name">New Course Name:</label>
-      <input
-        type="text"
-        id="course_name"
-        name="course_name"
-        placeholder="Enter course name"
-      /><br />
-      <small
-        >The selected semester (above) will be applied to this new
-        course.</small
+      <!-- Course Option -->
+      <label for="course_option">Course:</label>
+      <select
+        id="course_option"
+        name="course_option"
+        required
+        onchange="toggleCourseName()"
       >
-    </div>
+        <option value="">-- Select a Course --</option>
+        <option value="new">Add New Course</option>
+        {% for course in courses %}
+        <option value="{{ course[0] }}" data-semester="{{ course[2] }}">
+          {{ course[1] }}
+        </option>
+        {% endfor %}
+      </select>
 
-    <!-- Class Period Details -->
-    <label for="period_date">Date:</label>
-    <input type="date" id="period_date" name="period_date" required />
+      <!-- New Course Fields -->
+      <div id="new_course_field" style="display: none">
+        <label for="course_name">New Course Name:</label>
+        <input
+          type="text"
+          id="course_name"
+          name="course_name"
+          placeholder="Enter course name"
+        /><br />
+        <small>The selected semester (above) will be applied to this new course.</small>
+      </div>
 
-    <label for="start_time">Start Time:</label>
-    <input type="time" id="start_time" name="start_time" required />
+      <!-- Class Period Details -->
+      <label for="period_date">Date:</label>
+      <input type="date" id="period_date" name="period_date" required />
 
-    <label for="duration">Duration (minutes):</label>
-    <input
-      type="number"
-      id="duration"
-      name="duration"
-      min="45"
-      max="90"
-      required
-      placeholder="Enter duration (45-90 min)"
-      title="Duration must be between 45 and 90 minutes"
-    />
-    <small>Enter a value between 45 and 90 minutes.</small>
+      <label for="start_time">Start Time:</label>
+      <input type="time" id="start_time" name="start_time" required />
 
-    <button type="submit">Add Class Period</button>
-  </form>
+      <label for="duration">Duration (minutes):</label>
+      <input
+        type="number"
+        id="duration"
+        name="duration"
+        min="45"
+        max="90"
+        required
+        placeholder="Enter duration (45-90 min)"
+        title="Duration must be between 45 and 90 minutes"
+      />
+      <small>Enter a value between 45 and 90 minutes.</small>
 
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %} {% for category, message in messages %}
-  <div class="flash-{{ category }}">{{ message }}</div>
-  {% endfor %} {% endif %} {% endwith %}
+      <button type="submit">Add Class Period</button>
+    </form>
 
-  <script>
-    function filterCourses() {
-      const selectedSemester = document.getElementById("semester").value;
-      const courseSelect = document.getElementById("course_option");
-      const options = courseSelect.getElementsByTagName("option");
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 
-      courseSelect.value = "";
-      toggleCourseName();
+    <script>
+      function filterCourses() {
+        const selectedSemester = document.getElementById("semester").value;
+        const courseSelect = document.getElementById("course_option");
+        const options = courseSelect.getElementsByTagName("option");
 
-      for (let i = 0; i < options.length; i++) {
-        const option = options[i];
-        const semester = option.getAttribute("data-semester");
+        courseSelect.value = "";
+        toggleCourseName();
 
-        if (option.value === "" || option.value === "new") {
-          option.style.display = "block";
-        } else if (!selectedSemester) {
-          option.style.display = "none"; // Hide all courses if no semester selected
-        } else {
-          option.style.display =
-            semester === selectedSemester ? "block" : "none";
+        for (let i = 0; i < options.length; i++) {
+          const option = options[i];
+          const semester = option.getAttribute("data-semester");
+
+          if (option.value === "" || option.value === "new") {
+            option.style.display = "block";
+          } else if (!selectedSemester) {
+            option.style.display = "none";
+          } else {
+            option.style.display = semester === selectedSemester ? "block" : "none";
+          }
         }
       }
-    }
 
-    function toggleCourseName() {
-      const courseOption = document.getElementById("course_option").value;
-      const newCourseField = document.getElementById("new_course_field");
-      const courseNameInput = document.getElementById("course_name");
-      newCourseField.style.display = courseOption === "new" ? "block" : "none";
-      courseNameInput.required = courseOption === "new";
-    }
+      function toggleCourseName() {
+        const courseOption = document.getElementById("course_option").value;
+        const newCourseField = document.getElementById("new_course_field");
+        const courseNameInput = document.getElementById("course_name");
+        newCourseField.style.display = courseOption === "new" ? "block" : "none";
+        courseNameInput.required = courseOption === "new";
+      }
 
-    // Initialize on page load
-    filterCourses();
-  </script>
+      filterCourses();
+    </script>
+  {% else %}
+    <p>You must be an admin to view this page. Please <a href="{{ url_for('teacher.teacher_login') }}">log in</a> as an admin.</p>
+  {% endif %}
 </div>
 {% endblock %}

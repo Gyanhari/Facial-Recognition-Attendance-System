@@ -1,99 +1,77 @@
-{% extends "admin/layout.html" %} {% block title %}Manage Students{% endblock %}
+{% extends "admin/layout.html" %}
+{% block title %}Manage Students{% endblock %}
 {% block content %}
-<h2>Manage Students</h2>
+<h2 class="mb-4">Manage Students</h2>
 
 <h3>Existing Students</h3>
-<div>
-  <label for="rollno_filter">Filter by Roll No Prefix:</label>
-  <input
-    type="text"
-    id="rollno_filter"
-    onkeyup="filterStudents()"
-    placeholder="Enter roll no prefix"
-  />
+<div class="mb-3">
+    <label for="rollno_filter" class="form-label">Filter by Roll No Prefix:</label>
+    <input type="text" id="rollno_filter" class="form-control w-auto" onkeyup="filterStudents()" placeholder="Enter roll no prefix" />
 </div>
 {% if students %}
-<table id="students_table">
-  <tr>
-    <th>S.N.</th>
-    <th>Roll No</th>
-    <th>First Name</th>
-    <th>Middle Name</th>
-    <th>Last Name</th>
-    <th>Actions</th>
-  </tr>
-  {% for student in students %}
-  <tr data-rollno="{{ student[1] }}">
-    <td>{{ loop.index }}</td>
-    <td>{{ student[1] }}</td>
-    <td>{{ student[2] }}</td>
-    <td>{{ student[3] if student[3] else '' }}</td>
-    <td>{{ student[4] }}</td>
-    <td>
-      <form method="POST" style="display: inline">
-        <input type="hidden" name="action" value="edit" />
-        <input type="hidden" name="student_id" value="{{ student[0] }}" />
-        <label
-          >Roll No:
-          <input
-            type="text"
-            name="rollno"
-            value="{{ student[1] }}"
-            required /></label
-        ><br />
-        <label
-          >First Name:
-          <input
-            type="text"
-            name="first_name"
-            value="{{ student[2] }}"
-            required /></label
-        ><br />
-        <label
-          >Middle Name:
-          <input
-            type="text"
-            name="middle_name"
-            value="{{ student[3] if student[3] else '' }}" /></label
-        ><br />
-        <label
-          >Last Name:
-          <input
-            type="text"
-            name="last_name"
-            value="{{ student[4] }}"
-            required /></label
-        ><br />
-        <button type="submit">Update</button>
-      </form>
-      <form
-        method="POST"
-        style="display: inline"
-        onsubmit="return confirm('Are you sure you want to delete this student?');"
-      >
-        <input type="hidden" name="action" value="delete" />
-        <input type="hidden" name="student_id" value="{{ student[0] }}" />
-        <button type="submit">Delete</button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
+<table id="students_table" class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">S.N.</th>
+            <th scope="col">Roll No</th>
+            <th scope="col">First Name</th>
+            <th scope="col">Middle Name</th>
+            <th scope="col">Last Name</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr data-rollno="{{ student[1] }}">
+            <td>{{ loop.index }}</td>
+            <td>{{ student[1] }}</td>
+            <td>{{ student[2] }}</td>
+            <td>{{ student[3] if student[3] else '' }}</td>
+            <td>{{ student[4] }}</td>
+            <td>
+                <form method="POST" class="d-inline">
+                    <input type="hidden" name="action" value="edit" />
+                    <input type="hidden" name="student_id" value="{{ student[0] }}" />
+                    <div class="mb-2">
+                        <label class="form-label">Roll No:</label>
+                        <input type="text" name="rollno" value="{{ student[1] }}" class="form-control" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">First Name:</label>
+                        <input type="text" name="first_name" value="{{ student[2] }}" class="form-control" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Middle Name:</label>
+                        <input type="text" name="middle_name" value="{{ student[3] if student[3] else '' }}" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Last Name:</label>
+                        <input type="text" name="last_name" value="{{ student[4] }}" class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </form>
+                <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this student?');">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="student_id" value="{{ student[0] }}" />
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% else %}
-<p>No students available.</p>
+<p class="text-muted">No students available.</p>
 {% endif %}
 
 <script>
-  function filterStudents() {
-    const rollnoFilter = document
-      .getElementById("rollno_filter")
-      .value.toLowerCase();
-    const rows = document.querySelectorAll("#students_table tr[data-rollno]");
-
-    rows.forEach((row) => {
-      const rollno = row.getAttribute("data-rollno").toLowerCase();
-      row.style.display = rollno.startsWith(rollnoFilter) ? "" : "none";
-    });
-  }
+    function filterStudents() {
+        const rollnoFilter = document.getElementById("rollno_filter").value.toLowerCase();
+        const rows = document.querySelectorAll("#students_table tr[data-rollno]");
+        rows.forEach(row => {
+            const rollno = row.getAttribute("data-rollno").toLowerCase();
+            row.style.display = rollno.startsWith(rollnoFilter) ? "" : "none";
+        });
+    }
 </script>
 {% endblock %}

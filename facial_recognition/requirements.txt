@@ -13,4 +13,4 @@ scikit-learn
 flask
 flask-cors
 torchvision
-psycopg2
+psycopg2-binary

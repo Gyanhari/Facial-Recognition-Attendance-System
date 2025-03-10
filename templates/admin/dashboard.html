@@ -1,120 +1,141 @@
-{% extends "admin/layout.html" %} {% block title %}Dashboard{% endblock %} {%
-block content %}
-<h2>Admin Dashboard</h2>
+{% extends "admin/layout.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2 class="mb-4">Admin Dashboard</h2>
 
 <h3>Students</h3>
 {% if students %}
-<table>
-  <tr>
-    <th>S.N.</th>
-    <th>Roll No</th>
-    <th>First Name</th>
-    <th>Middle Name</th>
-    <th>Last Name</th>
-  </tr>
-  {% for student in students %}
-  <tr>
-    <td>{{ loop.index }}</td>
-    <td>{{ student[1] }}</td>
-    <td>{{ student[2] }}</td>
-    <td>{{ student[3] if student[3] else '' }}</td>
-    <td>{{ student[4] }}</td>
-  </tr>
-  {% endfor %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">S.N.</th>
+            <th scope="col">First Name</th>
+            <th scope="col">Middle Name</th>
+            <th scope="col">Last Name</th>
+            <th scope="col">Roll No</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ student[2] }} </td>
+            <td>{{ student[3] }}</td>
+            <td> {{ student[4] if student[4] else '' }}</td>
+            <td>{{ student[1] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% else %}
-<p>No students available.</p>
+<p class="text-muted">No students available.</p>
 {% endif %}
 
 <h3>Courses</h3>
-<div>
-  <label for="semester_filter">Filter by Semester:</label>
-  <select id="semester_filter" onchange="filterCourses()">
-    <option value="">All</option>
-    {% for i in range(1, 9) %}
-    <option value="{{ i }}">{{ i }}</option>
-    {% endfor %}
-  </select>
-</div>
 {% if courses %}
-<table id="courses_table">
-  <tr>
-    <th>S.N.</th>
-    <th>Course Name</th>
-    <th>Course Code</th>
-    <th>Semester</th>
-  </tr>
-  {% for course in courses %}
-  <tr data-semester="{{ course[3] }}">
-    <td>{{ loop.index }}</td>
-    <td>{{ course[1] }}</td>
-    <td>{{ course[2] }}</td>
-    <td>{{ course[3] }}</td>
-  </tr>
-  {% endfor %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">S.N.</th>
+            <th scope="col">Course Name</th>
+            <th scope="col">Course Code</th>
+            <th scope="col">Semester</th>
+            <th scope="col">Assigned Teachers</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for course in courses %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ course[1] }}</td>
+            <td>{{ course[2] }}</td>
+            <td>{{ course[3] }}</td>
+            <td>{{ course[4] if course[4] else "None" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% else %}
-<p>No courses available.</p>
+<p class="text-muted">No courses available.</p>
 {% endif %}
 
 <h3>Class Periods</h3>
-<div>
-  <label for="date_filter">Filter by Date:</label>
-  <input type="date" id="date_filter" onchange="filterPeriods()" />
+<div class="mb-3">
+    <label for="date_filter" class="form-label">Filter by Date:</label>
+    <input type="date" id="date_filter" class="form-control w-auto d-inline-block" onchange="filterPeriods()" />
 </div>
 {% if periods %}
-<table id="periods_table">
-  <tr>
-    <th>S.N.</th>
-    <th>Course Name</th>
-    <th>Date</th>
-    <th>Start Time</th>
-    <th>Duration (minutes)</th>
-    <th>View Attendance</th>
-  </tr>
-  {% for period in periods %}
-  <tr data-date="{{ period[2] }}">
-    <td>{{ loop.index }}</td>
-    <td>{{ period[1] }}</td>
-    <td>{{ period[2] }}</td>
-    <td>{{ period[3] }}</td>
-    <td>{{ period[4] }}</td>
-    <td>
-      <a href="{{ url_for('admin.manage_attendance', period_id=period[0]) }}"
-        >View</a
-      >
-    </td>
-  </tr>
-  {% endfor %}
+<table id="periods_table" class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">S.N.</th>
+            <th scope="col">Course Name</th>
+            <th scope="col">Teacher</th>
+            <th scope="col">Date</th>
+            <th scope="col">Start Time</th>
+            <th scope="col">Duration (minutes)</th>
+            <th scope="col">View Attendance</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for period in periods %}
+        <tr data-date="{{ period[2] }}">
+            <td>{{ loop.index }}</td>
+            <td>{{ period[1] }}</td>
+            <td>{{ period[7] }} {{ period[8] }}</td>
+            <td>{{ period[2] }}</td>
+            <td>{{ period[3] }}</td>
+            <td>{{ period[4] }}</td>
+            <td>
+                {% if period[5] %}
+                    <span class="text-muted">Completed</span>
+                {% else %}
+                    <a href="{{ url_for('admin.manage_attendance', period_id=period[0]) }}" class="btn btn-sm btn-primary">View</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 {% else %}
-<p>No class periods available.</p>
+<p class="text-muted">No class periods available.</p>
+{% endif %}
+
+<h3>Teachers</h3>
+{% if teachers %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">S.N.</th>
+            <th scope="col">Teacher ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for teacher in teachers %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ teacher[0] }}</td>
+            <td>{{ teacher[1] }} {{ teacher[2] }}</td>
+            <td>{{ teacher[3] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">No teachers available.</p>
 {% endif %}
 
 <script>
-  function filterCourses() {
-    const semesterFilter = document.getElementById("semester_filter").value;
-    const rows = document.querySelectorAll("#courses_table tr[data-semester]");
-
-    rows.forEach((row) => {
-      const semester = row.getAttribute("data-semester");
-      row.style.display =
-        !semesterFilter || semester === semesterFilter ? "" : "none";
-    });
-  }
-
-  function filterPeriods() {
-    const dateFilter = document.getElementById("date_filter").value;
-    const rows = document.querySelectorAll("#periods_table tr[data-date]");
-
-    rows.forEach((row) => {
-      const date = row.getAttribute("data-date");
-      row.style.display = !dateFilter || date === dateFilter ? "" : "none";
-    });
-  }
-
-  // Initialize filters
-  filterCourses();
-  filterPeriods();
+    function filterPeriods() {
+        const dateFilter = document.getElementById("date_filter").value;
+        const rows = document.querySelectorAll("#periods_table tr[data-date]");
+        rows.forEach(row => {
+            const date = row.getAttribute("data-date");
+            row.style.display = !dateFilter || date === dateFilter ? "" : "none";
+        });
+    }
+    filterPeriods();
 </script>
 {% endblock %}

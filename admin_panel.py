@@ -12,6 +12,9 @@ import pickle
 from datetime import datetime
 from facial_recognition.src.train_model import prepare_training_data, train_classifier, Classifier
 from facial_recognition.src.helper import check_rollno_in_aligned
+from facial_recognition.src.helper import admin_required
+from flask_bcrypt import Bcrypt
+bcrypt = Bcrypt()
 
 # Use the same logger as app.py
 logger = logging.getLogger('facial_recognition_app')
@@ -111,16 +114,64 @@ def get_all_periods():
             connection.close()
     return periods
 
+def get_all_teachers():
+    connection = get_db_connection()
+    teachers = []
+    if connection:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT teacher_id, first_name, last_name, email, is_admin FROM Teachers ORDER BY last_name, first_name")
+                teachers = cursor.fetchall()
+        except Exception as e:
+            logger.error(f"Error fetching teachers: {str(e)}")
+        finally:
+            connection.close()
+    return teachers
+
+
 # Admin Dashboard
-@admin_bp.route('/admin')
+@admin_bp.route('dashboard')
+@admin_required
 def admin_dashboard():
+    connection = get_db_connection()
     students = get_all_students()
-    courses = get_all_courses()
-    periods = get_all_periods()
-    return render_template('admin/dashboard.html', students=students, courses=courses, periods=periods)
+    courses = []
+    periods = []
+    teachers = get_all_teachers()
+    if connection:
+        try:
+            with connection.cursor() as cursor:
+                # Fetch courses with assigned teachers
+                cursor.execute("""
+                    SELECT c.course_id, c.course_name, c.course_code, c.semester,
+                           STRING_AGG(t.first_name || ' ' || t.last_name, ', ') AS assigned_teachers
+                    FROM Courses c
+                    LEFT JOIN Course_Teacher ct ON c.course_id = ct.course_id
+                    LEFT JOIN Teachers t ON ct.teacher_id = t.teacher_id
+                    GROUP BY c.course_id, c.course_name, c.course_code, c.semester
+                    ORDER BY c.semester, c.course_name
+                """)
+                courses = cursor.fetchall()
+
+                # Fetch periods (already updated in previous response)
+                cursor.execute("""
+                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration, cp.completed,
+                           t.first_name, t.last_name
+                    FROM Class_Periods cp
+                    JOIN Courses c ON cp.course_id = c.course_id
+                    JOIN Course_Teacher ct ON cp.course_id = ct.course_id
+                    JOIN Teachers t ON ct.teacher_id = t.teacher_id
+                    ORDER BY cp.period_date DESC, cp.start_time
+                """)
+                periods = cursor.fetchall()
+        finally:
+            connection.close()
+    return render_template('admin/dashboard.html', students=students, courses=courses, periods=periods, teachers=teachers)
+
 
 # Student Management
-@admin_bp.route('/admin/students', methods=['GET', 'POST'])
+@admin_bp.route('students', methods=['GET', 'POST'])
+@admin_required
 def manage_students():
     if request.method == 'POST':
         action = request.form.get('action')
@@ -205,7 +256,8 @@ def manage_students():
     return render_template('admin/students.html', students=students)
 
 # Course Management
-@admin_bp.route('/admin/courses', methods=['GET', 'POST'])
+@admin_bp.route('courses', methods=['GET', 'POST'])
+@admin_required
 def manage_courses():
     if request.method == 'POST':
         action = request.form.get('action')
@@ -218,11 +270,12 @@ def manage_courses():
         course_name = request.form.get('course_name')
         course_code = request.form.get('course_code')
         semester = request.form.get('semester')
+        teacher_id = request.form.get('teacher_id')  # New field for teacher assignment
 
         if action in ['add', 'edit']:
-            if not course_name or not semester:
-                flash("Course Name and Semester are required.", "error")
-                logger.warning("Missing Course Name or Semester for course management.")
+            if not course_name or not semester or not teacher_id:
+                flash("Course Name, Semester, and Teacher are required.", "error")
+                logger.warning("Missing Course Name, Semester, or Teacher for course management.")
                 return redirect(url_for('admin.manage_courses'))
             try:
                 semester = int(semester)
@@ -251,9 +304,15 @@ def manage_courses():
                         (course_name, course_code, semester)
                     )
                     course_id = cursor.fetchone()[0]
+                    # Assign teacher to the course
+                    cursor.execute(
+                        "INSERT INTO Course_Teacher (course_id, teacher_id) VALUES (%s, %s)",
+                        (course_id, teacher_id)
+                    )
                     connection.commit()
-                    flash(f"Course {course_name} (Semester {semester}) added successfully.", "success")
-                    logger.info(f"Added course: {course_name} (ID: {course_id}, Semester: {semester})")
+                    flash(f"Course {course_name} (Semester {semester}) added and assigned to teacher.", "success")
+                    logger.info(f"Added course: {course_name} (ID: {course_id}, Semester: {semester}, Teacher ID: {teacher_id})")
+
                 elif action == 'edit':
                     course_id = request.form.get('course_id')
                     if not course_id:
@@ -266,19 +325,29 @@ def manage_courses():
                         "UPDATE Courses SET course_name = %s, course_code = %s, semester = %s WHERE course_id = %s",
                         (course_name, course_code, semester, course_id)
                     )
+                    # Update teacher assignment (delete existing, insert new)
+                    cursor.execute("DELETE FROM Course_Teacher WHERE course_id = %s", (course_id,))
+                    cursor.execute(
+                        "INSERT INTO Course_Teacher (course_id, teacher_id) VALUES (%s, %s)",
+                        (course_id, teacher_id)
+                    )
                     connection.commit()
                     flash("Course updated successfully.", "success")
-                    logger.info(f"Updated course ID {course_id}: {course_name} (Semester: {semester})")
+                    logger.info(f"Updated course ID {course_id}: {course_name} (Semester: {semester}, Teacher ID: {teacher_id})")
+
                 elif action == 'delete':
                     course_id = request.form.get('course_id')
                     if not course_id:
                         flash("Course ID is required for deletion.", "error")
                         logger.warning("Missing Course ID for deletion.")
                         return redirect(url_for('admin.manage_courses'))
+                    # Delete from Course_Teacher first due to foreign key constraint
+                    cursor.execute("DELETE FROM Course_Teacher WHERE course_id = %s", (course_id,))
                     cursor.execute("DELETE FROM Courses WHERE course_id = %s", (course_id,))
                     connection.commit()
                     flash("Course deleted successfully.", "success")
                     logger.info(f"Deleted course ID {course_id}")
+
         except Exception as e:
             connection.rollback()
             flash(f"Error: {str(e)}", "error")
@@ -288,100 +357,150 @@ def manage_courses():
 
         return redirect(url_for('admin.manage_courses'))
 
-    courses = get_all_courses()
-    return render_template('admin/courses.html', courses=courses)
-
-# Class Period Management
-@admin_bp.route('/admin/periods', methods=['GET', 'POST'])
-def manage_periods():
-    if request.method == 'POST':
-        action = request.form.get('action')
-        if not action:
-            flash("Action is required.", "error")
-            logger.warning("No action provided in period management form.")
-            return redirect(url_for('admin.manage_periods'))
-
-        connection = get_db_connection()
-        if not connection:
-            flash("Error connecting to database.", "error")
-            logger.error("Failed to connect to database during period management.")
-            return redirect(url_for('admin.manage_periods'))
-
+    connection = get_db_connection()
+    courses = []
+    teachers = []
+    if connection:
         try:
             with connection.cursor() as cursor:
-                if action == 'add':
-                    course_id = request.form.get('course_id')
-                    period_date = request.form.get('period_date')
-                    start_time = request.form.get('start_time')
-                    duration = request.form.get('duration')
+                # Fetch courses with assigned teacher info
+                cursor.execute("""
+                    SELECT c.course_id, c.course_name, c.course_code, c.semester,
+                           t.first_name, t.last_name, t.email, t.teacher_id
+                    FROM Courses c
+                    LEFT JOIN Course_Teacher ct ON c.course_id = ct.course_id
+                    LEFT JOIN Teachers t ON ct.teacher_id = t.teacher_id
+                    ORDER BY c.semester, c.course_name
+                """)
+                courses = cursor.fetchall()
 
-                    if not all([course_id, period_date, start_time, duration]):
-                        flash("All fields are required for adding a period.", "error")
-                        logger.warning("Missing required fields for adding a period.")
-                        return redirect(url_for('admin.manage_periods'))
-
-                    duration = duration.strip()
-                    if not duration.isdigit() or int(duration) < 45 or int(duration) > 120:
-                        flash("Duration must be a number between 45 and 120 minutes.", "error")
-                        logger.warning(f"Invalid duration {duration} for period (must be 45-120 minutes).")
-                        return redirect(url_for('admin.manage_periods'))
-                    duration = int(duration)
-                    cursor.execute(
-                        "INSERT INTO Class_Periods (course_id, period_date, start_time, duration) VALUES (%s, %s, %s, %s)",
-                        (course_id, period_date, start_time, duration)
-                    )
-                    connection.commit()
-                    flash("Class period added successfully.", "success")
-                    logger.info(f"Added class period: Course ID {course_id}, Date {period_date}, Start {start_time}, Duration {duration}")
-                elif action == 'edit':
-                    period_id = request.form.get('period_id')
-                    course_id = request.form.get('course_id')
-                    period_date = request.form.get('period_date')
-                    start_time = request.form.get('start_time')
-                    duration = request.form.get('duration')
-
-                    if not all([period_id, course_id, period_date, start_time, duration]):
-                        flash("All fields are required for editing a period.", "error")
-                        logger.warning("Missing required fields for editing a period.")
-                        return redirect(url_for('admin.manage_periods'))
-
-                    duration = duration.strip()
-                    if not duration.isdigit() or int(duration) < 45 or int(duration) > 120:
-                        flash("Duration must be a number between 45 and 120 minutes.", "error")
-                        logger.warning(f"Invalid duration {duration} for period (must be 45-120 minutes).")
-                        return redirect(url_for('admin.manage_periods'))
-                    duration = int(duration)
-                    cursor.execute(
-                        "UPDATE Class_Periods SET course_id = %s, period_date = %s, start_time = %s, duration = %s WHERE period_id = %s",
-                        (course_id, period_date, start_time, duration, period_id)
-                    )
-                    connection.commit()
-                    flash("Class period updated successfully.", "success")
-                    logger.info(f"Updated class period ID {period_id}: Course ID {course_id}, Date {period_date}, Start {start_time}, Duration {duration}")
-                elif action == 'delete':
-                    period_id = request.form.get('period_id')
-                    if not period_id:
-                        flash("Period ID is required for deletion.", "error")
-                        logger.warning("Missing period ID for deletion.")
-                        return redirect(url_for('admin.manage_periods'))
-                    cursor.execute("DELETE FROM Class_Periods WHERE period_id = %s", (period_id,))
-                    connection.commit()
-                    flash("Class period deleted successfully.", "success")
-                    logger.info(f"Deleted class period ID {period_id}")
+                # Fetch all teachers for the dropdown
+                cursor.execute("SELECT teacher_id, first_name, last_name, email FROM Teachers ORDER BY last_name, first_name")
+                teachers = cursor.fetchall()
         except Exception as e:
-            connection.rollback()
-            flash(f"Error: {str(e)}", "error")
-            logger.error(f"Error during period management: {str(e)}")
+            logger.error(f"Error fetching courses or teachers: {str(e)}")
+            flash("Error loading course data.", "error")
         finally:
             connection.close()
 
-        return redirect(url_for('admin.manage_periods'))
+    return render_template('admin/courses.html', courses=courses, teachers=teachers)
 
-    periods = get_all_periods()
-    courses = get_all_courses()
-    return render_template('admin/periods.html', periods=periods, courses=courses)
 
-@admin_bp.route('/admin/attendance/<int:period_id>', methods=['GET', 'POST'])
+
+# Class Period Management
+@admin_bp.route('periods', methods=['GET', 'POST'])
+@admin_required
+def manage_periods():
+    connection = get_db_connection()
+    periods = []
+    courses = []
+    filter_completed = request.args.get('filter_completed', 'all')
+    filter_date = request.args.get('filter_date', '')
+
+    if connection:
+        try:
+            with connection.cursor() as cursor:
+                # Fetch all courses for the form
+                cursor.execute("""
+                    SELECT course_id, course_name, course_code, semester
+                    FROM Courses
+                    ORDER BY semester, course_name
+                """)
+                courses = cursor.fetchall()
+
+                # Fetch periods with completed status and course_id
+                query = """
+                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration, c.semester, cp.completed, cp.course_id
+                    FROM Class_Periods cp
+                    JOIN Courses c ON cp.course_id = c.course_id
+                    ORDER BY cp.period_date DESC, cp.start_time
+                """
+                if filter_completed == 'completed':
+                    query = query.replace("ORDER BY", "WHERE cp.completed = TRUE ORDER BY")
+                elif filter_completed == 'not_completed':
+                    query = query.replace("ORDER BY", "WHERE cp.completed = FALSE ORDER BY")
+
+                if filter_date:
+                    if "WHERE" in query:
+                        query = query.replace("ORDER BY", f"AND cp.period_date = '{filter_date}' ORDER BY")
+                    else:
+                        query = query.replace("ORDER BY", f"WHERE cp.period_date = '{filter_date}' ORDER BY")
+
+                cursor.execute(query)
+                periods = cursor.fetchall()
+
+                # Handle form submissions
+                if request.method == 'POST':
+                    action = request.form.get('action')
+
+                    if action in ['add', 'edit']:
+                        course_id = request.form.get('course_id')
+
+                        # Validate course_id is not empty and is an integer
+                        if not course_id or not course_id.isdigit():
+                            flash("Error: Invalid course selection.", "error")
+                            return redirect(url_for('admin.manage_periods', filter_completed=filter_completed, filter_date=filter_date))
+
+                        course_id = int(course_id)  # Convert to integer
+
+                        # Validate course_id exists in Courses table
+                        cursor.execute("SELECT course_id FROM Courses WHERE course_id = %s", (course_id,))
+                        if not cursor.fetchone():
+                            flash(f"Error: Course with ID {course_id} does not exist.", "error")
+                            return redirect(url_for('admin.manage_periods', filter_completed=filter_completed, filter_date=filter_date))
+
+                    if action == 'add':
+                        period_date = request.form.get('period_date')
+                        start_time = request.form.get('start_time')
+                        duration = request.form.get('duration')
+                        completed = request.form.get('completed') == 'on'
+
+                        cursor.execute(
+                            """
+                            INSERT INTO Class_Periods (course_id, period_date, start_time, duration, completed)
+                            VALUES (%s, %s, %s, %s, %s)
+                            """,
+                            (course_id, period_date, start_time, duration, completed)
+                        )
+                        connection.commit()
+                        flash("Period added successfully.", "success")
+
+                    elif action == 'edit':
+                        period_id = request.form.get('period_id')
+                        period_date = request.form.get('period_date')
+                        start_time = request.form.get('start_time')
+                        duration = request.form.get('duration')
+                        completed = request.form.get('completed') == 'on'
+
+                        cursor.execute(
+                            """
+                            UPDATE Class_Periods
+                            SET course_id = %s, period_date = %s, start_time = %s, duration = %s, completed = %s
+                            WHERE period_id = %s
+                            """,
+                            (course_id, period_date, start_time, duration, completed, period_id)
+                        )
+                        connection.commit()
+                        flash("Period updated successfully.", "success")
+
+                    elif action == 'delete':
+                        period_id = request.form.get('period_id')
+                        cursor.execute("DELETE FROM Class_Periods WHERE period_id = %s", (period_id,))
+                        connection.commit()
+                        flash("Period deleted successfully.", "success")
+
+                    return redirect(url_for('admin.manage_periods', filter_completed=filter_completed, filter_date=filter_date))
+
+        except Exception as e:
+            connection.rollback()
+            flash(f"Error: {str(e)}", "error")
+        finally:
+            connection.close()
+
+    return render_template('admin/periods.html', periods=periods, courses=courses, filter_completed=filter_completed, filter_date=filter_date)
+
+
+@admin_bp.route('attendance/<int:period_id>', methods=['GET', 'POST'])
 def manage_attendance(period_id):
     connection = get_db_connection()
     records = []
@@ -468,7 +587,8 @@ def manage_attendance(period_id):
     return render_template('admin/attendance.html', records=records, period_id=period_id, course_name=course_name, students=students)
 
 # System Monitoring
-@admin_bp.route('/admin/monitor')
+@admin_bp.route('monitor')
+@admin_required
 def monitor_system():
     log_file = os.path.join('logs', 'app.log')
     logs = []
@@ -478,7 +598,7 @@ def monitor_system():
     return render_template('admin/monitor.html', logs=logs, classifier_status=f"Loaded with {num_classes} classes" if classifier else "Not loaded")
 
 # Re-train Model
-@admin_bp.route('/admin/retrain', methods=['POST'])
+@admin_bp.route('retrain', methods=['POST'])
 def retrain_model():
     try:
         if not os.path.exists(ALIGNED_DATA_PATH) or not os.listdir(ALIGNED_DATA_PATH):
@@ -510,3 +630,134 @@ def retrain_model():
         flash(f"Error during re-training: {str(e)}", "error")
 
     return redirect(url_for('admin.monitor_system'))
+
+
+@admin_bp.route('/add_teacher', methods=['GET', 'POST'])
+@admin_required
+def add_teacher():
+    connection = get_db_connection()
+    teachers = get_all_teachers()  # Fetch all teachers for display
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if not action:
+            flash("Action is required.", "error")
+            logger.warning("No action provided in teacher management form.")
+            return redirect(url_for('admin.add_teacher'))
+
+        connection = get_db_connection()
+        if not connection:
+            flash("Error connecting to database.", "error")
+            logger.error("Failed to connect to database during teacher management.")
+            return redirect(url_for('admin.add_teacher'))
+
+        try:
+            with connection.cursor() as cursor:
+                if action == 'add':
+                    first_name = request.form.get('first_name')
+                    last_name = request.form.get('last_name')
+                    email = request.form.get('email')
+                    password = request.form.get('password')
+                    is_admin = request.form.get('is_admin') == 'on'  # Changed to 'on' to match typical checkbox behavior
+
+                    # Validate required fields
+                    if not all([first_name, last_name, email, password]):
+                        flash("All fields are required.", "error")
+                        logger.warning("Missing required fields in add teacher form.")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    if len(password) < 6:
+                        flash("Password must be at least 6 characters long.", "error")
+                        logger.warning("Password too short in add teacher form.")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    # Check if email already exists
+                    cursor.execute("SELECT teacher_id FROM Teachers WHERE email = %s", (email.lower().strip(),))
+                    if cursor.fetchone():
+                        flash("Email already exists.", "error")
+                        logger.warning(f"Attempted to add teacher with existing email: {email}")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    # Hash the password using bcrypt
+                    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+                    
+                    cursor.execute(
+                        "INSERT INTO Teachers (first_name, last_name, email, password, is_admin) VALUES (%s, %s, %s, %s, %s) RETURNING teacher_id",
+                        (first_name.strip(), last_name.strip(), email.lower().strip(), hashed_password, is_admin)
+                    )
+                    teacher_id = cursor.fetchone()[0]
+                    connection.commit()
+                    flash(f"Teacher {first_name} {last_name} added successfully.", "success")
+                    logger.info(f"Added teacher: {first_name} {last_name} (ID: {teacher_id}, Email: {email}, Admin: {is_admin})")
+
+                elif action == 'edit':
+                    teacher_id = request.form.get('teacher_id')
+                    first_name = request.form.get('first_name')
+                    last_name = request.form.get('last_name')
+                    email = request.form.get('email')
+                    password = request.form.get('password')
+                    is_admin = request.form.get('is_admin') == 'on'
+
+                    if not all([teacher_id, first_name, last_name, email]):
+                        flash("Teacher ID, First Name, Last Name, and Email are required.", "error")
+                        logger.warning("Missing required fields in edit teacher form.")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    # Check if email is taken by another teacher
+                    cursor.execute(
+                        "SELECT teacher_id FROM Teachers WHERE email = %s AND teacher_id != %s",
+                        (email.lower().strip(), teacher_id)
+                    )
+                    if cursor.fetchone():
+                        flash("Email is already in use by another teacher.", "error")
+                        logger.warning(f"Email {email} already in use during teacher edit.")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    if password:
+                        if len(password) < 6:
+                            flash("Password must be at least 6 characters long.", "error")
+                            logger.warning("Password too short in edit teacher form.")
+                            return redirect(url_for('admin.add_teacher'))
+                        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+                        cursor.execute(
+                            "UPDATE Teachers SET first_name = %s, last_name = %s, email = %s, password = %s, is_admin = %s WHERE teacher_id = %s",
+                            (first_name.strip(), last_name.strip(), email.lower().strip(), hashed_password, is_admin, teacher_id)
+                        )
+                    else:
+                        cursor.execute(
+                            "UPDATE Teachers SET first_name = %s, last_name = %s, email = %s, is_admin = %s WHERE teacher_id = %s",
+                            (first_name.strip(), last_name.strip(), email.lower().strip(), is_admin, teacher_id)
+                        )
+                    connection.commit()
+                    flash("Teacher updated successfully.", "success")
+                    logger.info(f"Updated teacher ID {teacher_id}: {first_name} {last_name} (Email: {email}, Admin: {is_admin})")
+
+                elif action == 'delete':
+                    teacher_id = request.form.get('teacher_id')
+                    if not teacher_id:
+                        flash("Teacher ID is required for deletion.", "error")
+                        logger.warning("Missing teacher ID for deletion.")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    # Check if teacher is assigned to any courses
+                    cursor.execute("SELECT course_id FROM Course_Teacher WHERE teacher_id = %s", (teacher_id,))
+                    if cursor.fetchone():
+                        flash("Cannot delete teacher assigned to courses. Remove course assignments first.", "error")
+                        logger.warning(f"Attempted to delete teacher ID {teacher_id} with existing course assignments.")
+                        return redirect(url_for('admin.add_teacher'))
+
+                    cursor.execute("DELETE FROM Teachers WHERE teacher_id = %s", (teacher_id,))
+                    connection.commit()
+                    flash("Teacher deleted successfully.", "success")
+                    logger.info(f"Deleted teacher ID {teacher_id}")
+
+        except Exception as e:
+            connection.rollback()
+            flash(f"Error: {str(e)}", "error")
+            logger.error(f"Error during teacher management: {str(e)}")
+        finally:
+            connection.close()
+
+        return redirect(url_for('admin.add_teacher'))
+
+    return render_template('admin/add_teacher.html', teachers=teachers)

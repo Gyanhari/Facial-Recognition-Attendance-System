@@ -4,73 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} - Admin Panel</title>
-    <link
-    rel="stylesheet"
-    href="{{ url_for('static', filename='styles/admin_style.css') }}"
-  />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin_style.css') }}">
     <style>
-
-        /* Highlight active page */
-        {% if request.endpoint == 'admin.admin_dashboard' %}
-            <style>.navbar a:nth-child(1) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% elif request.endpoint == 'admin.manage_students' %}
-            <style>.navbar a:nth-child(2) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% elif request.endpoint == 'admin.manage_courses' %}
-            <style>.navbar a:nth-child(3) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% elif request.endpoint == 'admin.manage_periods' %}
-            <style>.navbar a:nth-child(4) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% elif request.endpoint == 'attendance' %}
-            <style>.navbar a:nth-child(5) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% elif request.endpoint == 'admin.monitor_system' %}
-            <style>.navbar a:nth-child(6) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% elif request.endpoint == 'admin.manage_settings' %}
-            <style>.navbar a:nth-child(7) { background-color: #3498db; color: #ffffff; font-weight: 600; }</style>
-        {% endif %}
+        .navbar {
+            background-color: #007bff !important;
+        }
+        .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+        .navbar-nav .nav-link {
+            color: #ffffff !important;
+            margin-left: 15px;
+        }
+        .navbar-nav .nav-link.active {
+            background-color: #0056b3 !important;
+            color: #ffffff !important;
+            border-radius: 5px;
+        }
+        .flash-messages {
+            margin: 15px 0;
+        }
+        .container {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .content-card {
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>Facial Recognition Attendance System - Admin Panel</h1>
-        <div class="menu" id="menu">
-          <img src="{{ url_for('static', filename='hamburger.svg') }}" alt="Menu">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin.admin_dashboard') }}">
+                Facial Recognition Attendance System - Admin Panel
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.manage_students' %}active{% endif %}" href="{{ url_for('admin.manage_students') }}">Students</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}" href="{{ url_for('admin.manage_courses') }}">Courses</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.add_teacher' %}active{% endif %}" href="{{ url_for('admin.add_teacher') }}">Manage Teacher</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.manage_periods' %}active{% endif %}" href="{{ url_for('admin.manage_periods') }}">Periods</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}" href="{{ url_for('attendance') }}">Attendance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.monitor_system' %}active{% endif %}" href="{{ url_for('admin.monitor_system') }}">Monitor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('capture') }}">Main Page</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('teacher.teacher_logout') }}">Logout</a>
+                      </li>
+                </ul>
+            </div>
         </div>
-    </header>
-    <div class="navbar" id="navbar">
-        <a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('admin.manage_students') }}">Students</a>
-        <a href="{{ url_for('admin.manage_courses') }}">Courses</a>
-        <a href="{{ url_for('admin.manage_periods') }}">Periods</a>
-        <a href="{{ url_for('attendance') }}">Attendance</a>
-        <a href="{{ url_for('admin.monitor_system') }}">Monitor</a>
-        <a href="{{ url_for('capture') }}">Main Page</a>
-    </div>
+    </nav>
 
-
-    <main>
+    <main class="container">
         <div class="flash-messages">
             {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
         </div>
         <div class="content-card">
-            {% block content %}
-            {% endblock %}
+            {% block content %}{% endblock %}
         </div>
     </main>
-    <script>
-      const menuButton = document.getElementById('menu');
-      const navBar = document.getElementById('navbar');
-      menuButton.addEventListener('click', ()=>{
-        if (navBar.style.display === 'none' || navBar.style.display === '') {
-        navBar.style.display = 'block';
-        }
-        else {
-        navBar.style.display = 'none';  
-      }})
-    </script>
+
+    <footer class="bg-light text-center py-3 mt-auto">
+        <p>© 2025 Facial Recognition Attendance System. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

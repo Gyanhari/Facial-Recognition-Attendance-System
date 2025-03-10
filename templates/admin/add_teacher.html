@@ -1,0 +1,176 @@
+{% extends "admin/layout.html" %}
+{% block title %}Manage Teachers{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="content-card card shadow-sm p-4">
+        <h2 class="card-title mb-4 text-center text-dark">Teacher Management</h2>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} mt-3 alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Add Teacher Form -->
+        <h3 class="mt-4 mb-3">Add New Teacher</h3>
+        <form method="POST" action="{{ url_for('admin.add_teacher') }}" class="needs-validation mb-5" novalidate>
+            <input type="hidden" name="action" value="add">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="first_name" class="form-label fw-bold">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" class="form-control" 
+                           required placeholder="Enter first name" pattern="[A-Za-z\s]+">
+                    <div class="invalid-feedback">Please provide a valid first name (letters only).</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="last_name" class="form-label fw-bold">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" class="form-control" 
+                           required placeholder="Enter last name" pattern="[A-Za-z\s]+">
+                    <div class="invalid-feedback">Please provide a valid last name (letters only).</div>
+                </div>
+            </div>
+            <div class="mb-3 mt-3">
+                <label for="email" class="form-label fw-bold">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" 
+                       required placeholder="Enter email (e.g., teacher@domain.com)">
+                <div class="invalid-feedback">Please provide a valid email address.</div>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label fw-bold">Password:</label>
+                <input type="password" id="password" name="password" class="form-control" 
+                       required placeholder="Enter password (min 6 characters)" minlength="6">
+                <div class="invalid-feedback">Password must be at least 6 characters.</div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input type="checkbox" id="is_admin" name="is_admin" class="form-check-input">
+                    <label for="is_admin" class="form-check-label">Grant Admin Privileges</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Add Teacher</button>
+        </form>
+
+        <!-- Teachers List -->
+        <h3 class="mb-3">Current Teachers</h3>
+        {% if teachers %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Admin</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                    <tr>
+                        <td>{{ teacher[0] }}</td>
+                        <td>{{ teacher[1] }} {{ teacher[2] }}</td>
+                        <td>{{ teacher[3] }}</td>
+                        <td>{{ 'Yes' if teacher[4] else 'No' }}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" 
+                                    data-bs-target="#editModal{{ teacher[0] }}">
+                                Edit
+                            </button>
+                            <form method="POST" action="{{ url_for('admin.add_teacher') }}" style="display:inline;" 
+                                  onsubmit="return confirm('Are you sure you want to delete this teacher?');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="teacher_id" value="{{ teacher[0] }}">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <!-- Edit Modal -->
+                    <div class="modal fade" id="editModal{{ teacher[0] }}" tabindex="-1" aria-labelledby="editModalLabel{{ teacher[0] }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="POST" action="{{ url_for('admin.add_teacher') }}" class="needs-validation" novalidate>
+                                    <input type="hidden" name="action" value="edit">
+                                    <input type="hidden" name="teacher_id" value="{{ teacher[0] }}">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="editModalLabel{{ teacher[0] }}">Edit Teacher</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="first_name_{{ teacher[0] }}" class="form-label">First Name:</label>
+                                            <input type="text" id="first_name_{{ teacher[0] }}" name="first_name" 
+                                                   class="form-control" required value="{{ teacher[1] }}" pattern="[A-Za-z\s]+">
+                                            <div class="invalid-feedback">Please provide a valid first name.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="last_name_{{ teacher[0] }}" class="form-label">Last Name:</label>
+                                            <input type="text" id="last_name_{{ teacher[0] }}" name="last_name" 
+                                                   class="form-control" required value="{{ teacher[2] }}" pattern="[A-Za-z\s]+">
+                                            <div class="invalid-feedback">Please provide a valid last name.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="email_{{ teacher[0] }}" class="form-label">Email:</label>
+                                            <input type="email" id="email_{{ teacher[0] }}" name="email" 
+                                                   class="form-control" required value="{{ teacher[3] }}">
+                                            <div class="invalid-feedback">Please provide a valid email.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="password_{{ teacher[0] }}" class="form-label">New Password (optional):</label>
+                                            <input type="password" id="password_{{ teacher[0] }}" name="password" 
+                                                   class="form-control" placeholder="Enter new password (min 6 characters)" minlength="6">
+                                            <div class="invalid-feedback">Password must be at least 6 characters.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input type="checkbox" id="is_admin_{{ teacher[0] }}" name="is_admin" 
+                                                       class="form-check-input" {{ 'checked' if teacher[4] }}>
+                                                <label for="is_admin_{{ teacher[0] }}" class="form-check-label">Admin Privileges</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No teachers found.</p>
+        {% endif %}
+
+        <p class="text-center mt-4 mb-0">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="text-decoration-none text-primary">Back to Dashboard</a>
+        </p>
+    </div>
+</div>
+
+<!-- Bootstrap form validation script -->
+<script>
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+</script>
+{% endblock %}

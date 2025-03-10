@@ -1,48 +1,130 @@
-{% extends "teacher/base.html" %} {% block content %}
-<div class="content-card">
-  <h2>Teacher Login</h2>
-  <form method="POST" action="{{ url_for('teacher.teacher_login') }}">
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required /><br />
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required /><br />
-    <button type="submit">Login</button>
-  </form>
-  <p>
-    Don't have an account?
-    <a href="{{ url_for('teacher.teacher_register') }}">Register here</a>.
-  </p>
+{% extends "teacher/base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="content-card card shadow-sm p-4 mx-auto" style="max-width: 400px;">
+        <h2 class="card-title mb-4 text-center text-dark">Teacher Login</h2>
 
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %} {% for category, message in messages %}
-  <div class="alert-{{ category }}">{{ message }}</div>
-  {% endfor %} {% endif %} {% endwith %}
+        <!-- Flash messages (if any) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('teacher.teacher_login') }}" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <label for="email" class="form-label fw-bold">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" 
+                       required placeholder="e.g., teacher@domain.com"
+                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                       title="Please enter a valid email address (e.g., teacher@domain.com)">
+                <div class="invalid-feedback">Please enter a valid email address.</div>
+                <div class="valid-feedback">Looks good!</div>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="form-label fw-bold">Password:</label>
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="form-control" 
+                           required placeholder="Enter your password"
+                           minlength="6"
+                           title="Password must be at least 6 characters long">
+                    <button type="button" class="btn btn-outline-secondary" id="togglePassword" 
+                            aria-label="Toggle password visibility">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <div class="invalid-feedback w-100">Password must be at least 6 characters long.</div>
+                    <div class="valid-feedback w-100">Looks good!</div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
+        </form>
+
+
+    </div>
 </div>
 
-<style>
-  .alert-success {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border-left: 4px solid #28a745;
-  }
-  .alert-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border-left: 4px solid #dc3545;
-  }
-  .alert-info {
-    background-color: #cce5ff;
-    color: #004085;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border-left: 4px solid #007bff;
-  }
-</style>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Enhanced Validation and Password Toggle Script -->
+<script>
+    (function () {
+        'use strict';
+
+        // Bootstrap form validation
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                const email = form.querySelector('#email');
+                const password = form.querySelector('#password');
+
+                // Custom email validation
+                const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+                if (!emailPattern.test(email.value)) {
+                    email.setCustomValidity('Invalid email format');
+                } else {
+                    email.setCustomValidity('');
+                }
+
+                // Custom password validation
+                if (password.value.length < 6) {
+                    password.setCustomValidity('Password must be at least 6 characters');
+                } else {
+                    password.setCustomValidity('');
+                }
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+
+            // Real-time validation feedback
+            ['input', 'change'].forEach(eventType => {
+                form.querySelectorAll('input').forEach(input => {
+                    input.addEventListener(eventType, () => {
+                        if (input.checkValidity()) {
+                            input.classList.remove('is-invalid');
+                            input.classList.add('is-valid');
+                        } else {
+                            input.classList.remove('is-valid');
+                            input.classList.add('is-invalid');
+                        }
+                    });
+                });
+            });
+        });
+
+        // Password toggle functionality
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            const icon = togglePassword.querySelector('i');
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+            
+            // Maintain focus on password field
+            passwordInput.focus();
+        });
+
+        // Prevent form submission on Enter key in password field when toggling
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement === togglePassword) {
+                e.preventDefault();
+            }
+        });
+    })();
+</script>
 {% endblock %}

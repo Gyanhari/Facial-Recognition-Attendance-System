@@ -1,17 +1,22 @@
-{% extends "admin/layout.html" %} {% block title %}Manage Courses{% endblock %}
+{% extends "admin/layout.html" %}
+{% block title %}Manage Courses{% endblock %}
 {% block content %}
 <h2>Manage Courses</h2>
 
 <h3>Add Course</h3>
 <form method="POST">
   <input type="hidden" name="action" value="add" />
-  <label>Course Name: <input type="text" name="course_name" required /></label
-  ><br />
+  <label>Course Name: <input type="text" name="course_name" required /></label><br />
   <label>Course Code: <input type="text" name="course_code" /></label><br />
-  <label
-    >Semester (1-8):
-    <input type="number" name="semester" min="1" max="8" required /></label
-  ><br />
+  <label>Semester (1-8): <input type="number" name="semester" min="1" max="8" required /></label><br />
+  <label>Assign Teacher:
+    <select name="teacher_id" required>
+      <option value="">-- Select a Teacher --</option>
+      {% for teacher in teachers %}
+        <option value="{{ teacher[0] }}">{{ teacher[1] }} {{ teacher[2] }} ({{ teacher[3] }})</option>
+      {% endfor %}
+    </select>
+  </label><br />
   <button type="submit">Add Course</button>
 </form>
 
@@ -33,6 +38,7 @@
       <th>Course Name</th>
       <th>Course Code</th>
       <th>Semester</th>
+      <th>Assigned Teacher</th>
       <th>Actions</th>
     </tr>
     {% for course in courses %}
@@ -42,34 +48,29 @@
       <td>{{ course[2] }}</td>
       <td>{{ course[3] }}</td>
       <td>
+        {% if course[4] %}
+          {{ course[4] }} {{ course[5] }} ({{ course[6] }})
+        {% else %}
+          None
+        {% endif %}
+      </td>
+      <td>
         <form method="POST" style="display: inline">
           <input type="hidden" name="action" value="edit" />
           <input type="hidden" name="course_id" value="{{ course[0] }}" />
-          <label
-            >Course Name:
-            <input
-              type="text"
-              name="course_name"
-              value="{{ course[1] }}"
-              required /></label
-          ><br />
-          <label
-            >Course Code:
-            <input
-              type="text"
-              name="course_code"
-              value="{{ course[2] }}" /></label
-          ><br />
-          <label
-            >Semester (1-8):
-            <input
-              type="number"
-              name="semester"
-              value="{{ course[3] }}"
-              min="1"
-              max="8"
-              required /></label
-          ><br />
+          <label>Course Name: <input type="text" name="course_name" value="{{ course[1] }}" required /></label><br />
+          <label>Course Code: <input type="text" name="course_code" value="{{ course[2] }}" /></label><br />
+          <label>Semester (1-8): <input type="number" name="semester" value="{{ course[3] }}" min="1" max="8" required /></label><br />
+          <label>Assign Teacher:
+            <select name="teacher_id" required>
+              <option value="">-- Select a Teacher --</option>
+              {% for teacher in teachers %}
+                <option value="{{ teacher[0] }}" {% if course[4] and teacher[0] == course[7] %}selected{% endif %}>
+                  {{ teacher[1] }} {{ teacher[2] }} ({{ teacher[3] }})
+                </option>
+              {% endfor %}
+            </select>
+          </label><br />
           <button type="submit">Update</button>
         </form>
         <form
@@ -85,9 +86,7 @@
     </tr>
     {% endfor %}
   </table>
-  <p id="no_courses_message" style="display: none; color: red">
-    No course in this semester
-  </p>
+  <p id="no_courses_message" style="display: none; color: red">No course in this semester</p>
 </div>
 {% else %}
 <p>No courses available.</p>
@@ -107,13 +106,11 @@
       if (matchesFilter) hasVisibleCourses = true;
     });
 
-    // Show or hide the no courses message based on filter result
     noCoursesMessage.style.display = hasVisibleCourses ? "none" : "block";
     document.getElementById("courses_section").style.display =
       hasVisibleCourses || !semesterFilter ? "block" : "none";
   }
 
-  // Initialize filter on page load
   filterCourses();
 </script>
 {% endblock %}

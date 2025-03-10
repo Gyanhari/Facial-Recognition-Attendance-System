@@ -1,4 +1,8 @@
 import os
+from functools import wraps
+from flask import redirect, url_for, flash, session
+from flask_bcrypt import Bcrypt  # Add this import
+
 
 class ImageClass:
     """Helper class to store image class name and image paths."""
@@ -47,3 +51,12 @@ def check_rollno_in_aligned(rollno, aligned_dir):
         return False, None
     except FileNotFoundError:
         return False, None
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'teacher_id' not in session or not session.get('is_admin', False):
+            flash("Admin access required.", "error")
+            return redirect(url_for('teacher.teacher_login'))
+        return f(*args, **kwargs)
+    return decorated_function

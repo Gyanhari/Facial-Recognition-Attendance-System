@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask_bcrypt import Bcrypt  # Import Bcrypt
 import psycopg2
 from psycopg2 import Error
 import logging
@@ -8,6 +9,9 @@ logger = logging.getLogger('facial_recognition_app')
 
 # Blueprint for teacher panel
 teacher_bp = Blueprint('teacher', __name__, template_folder='templates/teacher')
+
+# Initialize Bcrypt (will be passed from app.py)
+bcrypt = None  # We'll set this in app.py to avoid circular imports
 
 # Database configuration
 DB_CONFIG = {
@@ -26,7 +30,6 @@ def get_db_connection():
         logger.error(f"Error connecting to database: {e}")
         return None
 
-
 @teacher_bp.route('/')
 def teacher_index():
     return render_template('teacher/base.html')
@@ -34,6 +37,11 @@ def teacher_index():
 # Teacher Login
 @teacher_bp.route('/login', methods=['GET', 'POST'])
 def teacher_login():
+    # Check if the user is already logged in
+    if 'teacher_id' in session:
+        flash("You are already logged in.", "info")
+        return redirect(url_for('teacher.teacher_dashboard'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -46,26 +54,21 @@ def teacher_login():
             try:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT teacher_id, first_name, last_name FROM Teachers WHERE email = %s AND password = %s",
-                        (email, password)
+                        "SELECT teacher_id, first_name, last_name, password, is_admin FROM Teachers WHERE email = %s",
+                        (email.lower().strip(),)
                     )
                     teacher = cursor.fetchone()
-                    if teacher:
+                    if teacher and bcrypt.check_password_hash(teacher[3], password):
                         session['teacher_id'] = teacher[0]
                         session['teacher_name'] = f"{teacher[1]} {teacher[2]}"
+                        session['is_admin'] = teacher[4]
                         flash(f"Logged in as {session['teacher_name']}", "success")
                         return redirect(url_for('teacher.teacher_dashboard'))
                     else:
                         flash("Invalid email or password.", "error")
-            except Exception as e:
-                logger.error(f"Error during teacher login: {e}")
-                flash("An error occurred during login.", "error")
             finally:
                 connection.close()
-        else:
-            flash("Error connecting to database.", "error")
         return redirect(url_for('teacher.teacher_login'))
-
     return render_template('teacher/login.html')
 
 # Teacher Registration
@@ -81,6 +84,9 @@ def teacher_register():
             flash("All fields are required.", "error")
             return redirect(url_for('teacher.teacher_register'))
 
+        # Hash the password
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
         connection = get_db_connection()
         if connection:
             try:
@@ -95,7 +101,7 @@ def teacher_register():
                         INSERT INTO Teachers (first_name, last_name, email, password)
                         VALUES (%s, %s, %s, %s) RETURNING teacher_id
                         """,
-                        (first_name, last_name, email, password)
+                        (first_name, last_name, email, hashed_password)
                     )
                     teacher_id = cursor.fetchone()[0]
                     connection.commit()
@@ -128,24 +134,27 @@ def teacher_dashboard():
     if 'teacher_id' not in session:
         flash("Please log in to access the dashboard.", "error")
         return redirect(url_for('teacher.teacher_login'))
-
+    
     connection = get_db_connection()
     periods = []
     if connection:
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration, c.semester
+                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration, c.semester, cp.completed
                     FROM Class_Periods cp
                     JOIN Courses c ON cp.course_id = c.course_id
                     JOIN Course_Teacher ct ON c.course_id = ct.course_id
                     WHERE ct.teacher_id = %s
-                    ORDER BY cp.period_date, cp.start_time
+                    ORDER BY cp.period_date DESC, cp.start_time
                 """, (session['teacher_id'],))
                 periods = cursor.fetchall()
-        except Exception as e:
-            logger.error(f"Error fetching periods for teacher {session['teacher_id']}: {e}")
-            flash("Error fetching periods.", "error")
         finally:
             connection.close()
     return render_template('teacher/dashboard.html', periods=periods)
+
+
+# Function to initialize Bcrypt (called from app.py)
+def init_bcrypt(app):
+    global bcrypt
+    bcrypt = Bcrypt(app)
