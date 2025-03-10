@@ -27,18 +27,29 @@ block content %}
 {% endif %}
 
 <h3>Courses</h3>
+<div>
+  <label for="semester_filter">Filter by Semester:</label>
+  <select id="semester_filter" onchange="filterCourses()">
+    <option value="">All</option>
+    {% for i in range(1, 9) %}
+    <option value="{{ i }}">{{ i }}</option>
+    {% endfor %}
+  </select>
+</div>
 {% if courses %}
-<table>
+<table id="courses_table">
   <tr>
     <th>S.N.</th>
     <th>Course Name</th>
     <th>Course Code</th>
+    <th>Semester</th>
   </tr>
   {% for course in courses %}
-  <tr>
+  <tr data-semester="{{ course[3] }}">
     <td>{{ loop.index }}</td>
     <td>{{ course[1] }}</td>
     <td>{{ course[2] }}</td>
+    <td>{{ course[3] }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -47,8 +58,12 @@ block content %}
 {% endif %}
 
 <h3>Class Periods</h3>
+<div>
+  <label for="date_filter">Filter by Date:</label>
+  <input type="date" id="date_filter" onchange="filterPeriods()" />
+</div>
 {% if periods %}
-<table>
+<table id="periods_table">
   <tr>
     <th>S.N.</th>
     <th>Course Name</th>
@@ -58,7 +73,7 @@ block content %}
     <th>View Attendance</th>
   </tr>
   {% for period in periods %}
-  <tr>
+  <tr data-date="{{ period[2] }}">
     <td>{{ loop.index }}</td>
     <td>{{ period[1] }}</td>
     <td>{{ period[2] }}</td>
@@ -74,4 +89,32 @@ block content %}
 </table>
 {% else %}
 <p>No class periods available.</p>
-{% endif %} {% endblock %}
+{% endif %}
+
+<script>
+  function filterCourses() {
+    const semesterFilter = document.getElementById("semester_filter").value;
+    const rows = document.querySelectorAll("#courses_table tr[data-semester]");
+
+    rows.forEach((row) => {
+      const semester = row.getAttribute("data-semester");
+      row.style.display =
+        !semesterFilter || semester === semesterFilter ? "" : "none";
+    });
+  }
+
+  function filterPeriods() {
+    const dateFilter = document.getElementById("date_filter").value;
+    const rows = document.querySelectorAll("#periods_table tr[data-date]");
+
+    rows.forEach((row) => {
+      const date = row.getAttribute("data-date");
+      row.style.display = !dateFilter || date === dateFilter ? "" : "none";
+    });
+  }
+
+  // Initialize filters
+  filterCourses();
+  filterPeriods();
+</script>
+{% endblock %}

@@ -6,7 +6,7 @@
     <title>{% block title %}{% endblock %} - Admin Panel</title>
     <link
     rel="stylesheet"
-    href="{{ url_for('static', filename='admin_style.css') }}"
+    href="{{ url_for('static', filename='styles/admin_style.css') }}"
   />
     <style>
 
@@ -42,7 +42,6 @@
         <a href="{{ url_for('admin.manage_periods') }}">Periods</a>
         <a href="{{ url_for('attendance') }}">Attendance</a>
         <a href="{{ url_for('admin.monitor_system') }}">Monitor</a>
-        <a href="{{ url_for('admin.manage_settings') }}">Settings</a>
         <a href="{{ url_for('capture') }}">Main Page</a>
     </div>
 

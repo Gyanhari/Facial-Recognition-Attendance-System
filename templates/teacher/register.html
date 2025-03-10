@@ -1,0 +1,52 @@
+{% extends "teacher/base.html" %} {% block content %}
+<div class="content-card">
+  <h2>Teacher Registration</h2>
+  <form method="POST" action="{{ url_for('teacher.teacher_register') }}">
+    <label for="first_name">First Name:</label>
+    <input type="text" id="first_name" name="first_name" required /><br />
+    <label for="last_name">Last Name:</label>
+    <input type="text" id="last_name" name="last_name" required /><br />
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required /><br />
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required /><br />
+    <button type="submit">Register</button>
+  </form>
+  <p>
+    Already have an account?
+    <a href="{{ url_for('teacher.teacher_login') }}">Login here</a>.
+  </p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+</div>
+
+<style>
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #28a745;
+  }
+  .alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #dc3545;
+  }
+  .alert-info {
+    background-color: #cce5ff;
+    color: #004085;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #007bff;
+  }
+</style>
+{% endblock %}

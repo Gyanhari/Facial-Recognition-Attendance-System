@@ -1,3 +1,5 @@
 uploaded_users.txt
 __pycache__
 venv
+logs
+attendance_records

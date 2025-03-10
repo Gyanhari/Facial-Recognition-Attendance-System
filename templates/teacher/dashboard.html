@@ -1,0 +1,85 @@
+{% extends "teacher/base.html" %} {% block content %}
+<div class="content-card">
+  <h2>Teacher Dashboard</h2>
+  <p>
+    Welcome, {{ session['teacher_name'] }} |
+    <a href="{{ url_for('teacher.teacher_logout') }}">Logout</a>
+  </p>
+
+  <h3>Your Assigned Periods</h3>
+  {% if periods %}
+  <table style="width: 100%; border-collapse: collapse; margin-top: 10px">
+    <thead>
+      <tr style="background-color: #f2f2f2">
+        <th style="border: 1px solid #ddd; padding: 8px; text-align: left">
+          Course Name
+        </th>
+        <th style="border: 1px solid #ddd; padding: 8px; text-align: left">
+          Semester
+        </th>
+        <th style="border: 1px solid #ddd; padding: 8px; text-align: left">
+          Date
+        </th>
+        <th style="border: 1px solid #ddd; padding: 8px; text-align: left">
+          Start Time
+        </th>
+        <th style="border: 1px solid #ddd; padding: 8px; text-align: left">
+          Duration (minutes)
+        </th>
+        <th style="border: 1px solid #ddd; padding: 8px; text-align: left">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for period in periods %}
+      <tr>
+        <td style="border: 1px solid #ddd; padding: 8px">{{ period[1] }}</td>
+        <td style="border: 1px solid #ddd; padding: 8px">{{ period[5] }}</td>
+        <td style="border: 1px solid #ddd; padding: 8px">{{ period[2] }}</td>
+        <td style="border: 1px solid #ddd; padding: 8px">{{ period[3] }}</td>
+        <td style="border: 1px solid #ddd; padding: 8px">{{ period[4] }}</td>
+        <td style="border: 1px solid #ddd; padding: 8px">
+          <a href="{{ url_for('attendance') }}?period_id={{ period[0] }}"
+            >Manage Attendance</a
+          >
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No periods assigned.</p>
+  {% endif %} {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %} {% for category, message in messages %}
+  <div class="alert-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+</div>
+
+<style>
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #28a745;
+  }
+  .alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #dc3545;
+  }
+  .alert-info {
+    background-color: #cce5ff;
+    color: #004085;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #007bff;
+  }
+</style>
+{% endblock %}

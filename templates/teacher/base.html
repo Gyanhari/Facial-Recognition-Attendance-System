@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Portal - Facial Recognition Attendance System</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles/teacher.css') }}"
+    />
+  </head>
+  <body>
+    <div class="navbar">
+      <h1>Teacher Portal - Facial Recognition Attendance System</h1>
+      <div>
+        {% if session['teacher_id'] %}
+        <span>Hello, {{ session['teacher_name'] }} | </span>
+        <a href="{{ url_for('teacher.teacher_logout') }}">Logout</a>
+        {% else %}
+        <a href="{{ url_for('teacher.teacher_login') }}">Teacher Login</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="content-card">
+        <h2>Welcome to the Teacher Portal</h2>
+        <p>
+          This portal is designed for teachers to manage attendance using facial
+          recognition technology. Log in to access your dashboard and manage
+          attendance for your assigned courses.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div class="alert-{{ category }}">{{ message }}</div>
+        {% endfor %} {% endif %} {% endwith %} {% if session['teacher_id'] %}
+        <a href="{{ url_for('teacher.teacher_dashboard') }}"
+          >Teacher Dashboard</a
+        >
+        <a href="{{ url_for('attendance') }}">Manage Attendance</a>
+        {% else %}
+        <a href="{{ url_for('teacher.teacher_login') }}">Login as Teacher</a>
+        <a href="{{ url_for('teacher.teacher_register') }}"
+          >Register as Teacher</a
+        >
+        {% endif %}
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2025 Facial Recognition Attendance System. All rights reserved.</p>
+    </footer>
+  </body>
+</html>

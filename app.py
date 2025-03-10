@@ -14,13 +14,15 @@ import psycopg2
 from scipy.stats import entropy
 from psycopg2 import Error
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 import torch.nn as nn
 import pandas as pd
 import logging
 import pickle
 from admin_panel import admin_bp
+from teacher_panel import teacher_bp
 
+# Configure logging
 logger = logging.getLogger('facial_recognition_app')
 logger.setLevel(logging.INFO)
 
@@ -34,7 +36,6 @@ file_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
@@ -43,6 +44,7 @@ logger.addHandler(console_handler)
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(teacher_bp, url_prefix='/teacher')
 
 # Database configuration
 DB_CONFIG = {
@@ -65,8 +67,6 @@ PLOTS_DIR = os.path.join('facial_recognition', 'plots')
 # FaceNet and MTCNN setup
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 mtcnn = MTCNN(keep_all=True, device=device, min_face_size=20, thresholds=[0.6, 0.7, 0.7])
-
-# Load FaceNet model
 facenet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 
 # Define Classifier
@@ -83,7 +83,7 @@ class Classifier(nn.Module):
     def forward(self, x):
         return self.fc(x)
 
-# Global classifier instance (updated during training)
+# Global classifier instance
 classifier = None
 class_names = []  # Initialize as an empty list
 num_classes = 0
@@ -132,18 +132,23 @@ def save_uploaded_user(rollno):
     with open(UPLOADED_USERS_FILE, 'a') as file:
         file.write(f"{rollno}\n")
 
-def get_periods():
+def get_periods(teacher_id=None):
     connection = get_db_connection()
     periods = []
     if connection:
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time
+                query = """
+                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration, c.semester
                     FROM Class_Periods cp
                     JOIN Courses c ON cp.course_id = c.course_id
-                    ORDER BY cp.period_date, cp.start_time
-                """)
+                """
+                params = ()
+                if teacher_id:
+                    query += " JOIN Course_Teacher ct ON c.course_id = ct.course_id WHERE ct.teacher_id = %s"
+                    params = (teacher_id,)
+                query += " ORDER BY cp.period_date, cp.start_time"
+                cursor.execute(query, params)
                 periods = cursor.fetchall()
         finally:
             connection.close()
@@ -187,17 +192,96 @@ def mark_attendance(student_id, period_id, connection, is_within_time_limit):
         logger.error(f"Error marking attendance for student ID {student_id}: {e}")
         connection.rollback()
 
+def is_screen_detected(frame, box, previous_detections=None):
+    if previous_detections is None:
+        previous_detections = {'count': 0, 'last_detected': False}
+
+    x1, y1, x2, y2 = [int(coord) for coord in box]
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
+
+    padding = 50
+    roi_x1, roi_y1 = max(0, x1 - padding), max(0, y1 - padding)
+    roi_x2, roi_y2 = min(frame.shape[1], x2 + padding), min(frame.shape[0], y2 + padding)
+    roi = frame[roi_x1:roi_x2, roi_y1:roi_y2]
+
+    if roi.size == 0:
+        return False, previous_detections
+
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    brightness = np.mean(gray)
+    is_bright = brightness > 100
+
+    edges = cv2.Canny(gray, 50, 150)
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    screen_detected_by_edges = False
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+        if cv2.contourArea(largest_contour) > 1000:
+            x, y, w, h = cv2.boundingRect(largest_contour)
+            aspect_ratio = w / h
+            screen_detected_by_edges = 0.5 < aspect_ratio < 2.0 and w > 150 and h > 150
+
+    hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
+    hist_entropy = entropy(hist.ravel())
+    low_texture = hist_entropy < 5.0
+
+    roi_rgb = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+    color_variance = np.var(roi_rgb, axis=(0, 1))
+    uniform_color = all(var < 1000 for var in color_variance)
+
+    indicators = {
+        'brightness': is_bright,
+        'edges': screen_detected_by_edges,
+        'texture': low_texture,
+        'color': uniform_color
+    }
+    indicator_score = sum(1 for v in indicators.values() if v) / len(indicators)
+    DETECTION_THRESHOLD = 0.75
+    CONSISTENCY_FRAMES = 5
+
+    if indicator_score >= DETECTION_THRESHOLD:
+        previous_detections['count'] += 1
+    else:
+        previous_detections['count'] = max(0, previous_detections['count'] - 1)
+
+    consistent_detection = previous_detections['count'] >= CONSISTENCY_FRAMES
+    previous_detections['last_detected'] = consistent_detection
+
+    logger.debug(f"Indicator score: {indicator_score:.2f}, Consistent: {consistent_detection}, Indicators: {indicators}")
+    return consistent_detection, previous_detections
 
 @app.route('/mark_attendance/<int:period_id>', methods=['POST'])
 def mark_attendance_route(period_id):
+    if 'teacher_id' not in session:
+        return jsonify({"status": "error", "messages": [{"category": "error", "text": "Please log in as a teacher."}]}), 401
+
     global classifier, class_names, num_classes
+    messages = []
+
     if classifier is None or len(class_names) == 0 or num_classes == 0:
         logger.error("Facial recognition models not loaded or class names empty.")
-        return jsonify({"status": "error", "message": "Facial recognition models not loaded or class names empty."}), 500
+        messages.append({"category": "error", "text": "Facial recognition models not loaded or class names empty."})
+        return jsonify({"status": "error", "messages": messages}), 500
 
     connection = get_db_connection()
     if not connection:
-        return jsonify({"status": "error", "message": "Error connecting to database."}), 500
+        messages.append({"category": "error", "text": "Error connecting to database."})
+        return jsonify({"status": "error", "messages": messages}), 500
+
+    # Verify teacher has access to this period
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 1
+            FROM Class_Periods cp
+            JOIN Courses c ON cp.course_id = c.course_id
+            JOIN Course_Teacher ct ON c.course_id = ct.course_id
+            WHERE cp.period_id = %s AND ct.teacher_id = %s
+        """, (period_id, session['teacher_id']))
+        if not cursor.fetchone():
+            messages.append({"category": "error", "text": "You do not have permission to access this period."})
+            connection.close()
+            return jsonify({"status": "error", "messages": messages}), 403
 
     # Check if the period has ended
     with connection.cursor() as cursor:
@@ -212,8 +296,9 @@ def mark_attendance_route(period_id):
         period_info = cursor.fetchone()
 
     if not period_info:
+        messages.append({"category": "error", "text": "Invalid period_id"})
         connection.close()
-        return jsonify({"status": "error", "message": "Invalid period_id"}), 404
+        return jsonify({"status": "error", "messages": messages}), 404
 
     period_date, start_time, duration = period_info
     period_start = datetime.combine(period_date, start_time)
@@ -241,84 +326,28 @@ def mark_attendance_route(period_id):
                     )
                     connection.commit()
                     logger.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
-                    absent_message = f"Marked {len(unmarked_students)} students as absent due to period end."
+                    messages.append({"category": "success", "text": f"Marked {len(unmarked_students)} students as absent due to period end."})
                 else:
                     logger.info(f"No unmarked students to mark as absent for period {period_id}")
-                    absent_message = "No unmarked students to mark as absent."
+                    messages.append({"category": "info", "text": "No unmarked students to mark as absent."})
             except Exception as e:
                 logger.error(f"Error marking absent students: {e}")
                 connection.rollback()
-                connection.close()
-                return jsonify({"status": "error", "message": f"Error marking absent students: {str(e)}"}), 500
-
-        connection.close()
-        return jsonify({
-            "status": "success",
-            "message": "Attendance marking completed (period ended).",
-            "absent_message": absent_message,
-            "recognized_count": 0
-        })
+                messages.append({"category": "error", "text": f"Error marking absent students: {str(e)}"})
+            connection.close()
+            return jsonify({"status": "success", "messages": messages})
 
     # Proceed with live attendance if period is active
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
+        messages.append({"category": "error", "text": "Error: Could not open camera."})
         connection.close()
-        return jsonify({"status": "error", "message": "Error: Could not open camera."}), 500
+        return jsonify({"status": "error", "messages": messages}), 500
 
     time_limit = 300
     recognized_students = set()
     start_time = time.time()
-
-    def is_screen_detected(frame, box):
-        """Robust screen detection using edge detection, texture analysis, and color uniformity."""
-        x1, y1, x2, y2 = [int(coord) for coord in box]
-        x1, y1 = max(0, x1), max(0, y1)
-        x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
-        
-        # Extract region of interest (ROI) with padding
-        padding = 50
-        roi_x1, roi_y1 = max(0, x1 - padding), max(0, y1 - padding)
-        roi_x2, roi_y2 = min(frame.shape[1], x2 + padding), min(frame.shape[0], y2 + padding)
-        roi = frame[roi_y1:roi_y2, roi_x1:roi_x2]
-
-        if roi.size == 0:
-            return False
-
-        # Convert to grayscale for edge and texture analysis
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-
-        # 1. Edge Detection: Check for strong rectangular edges (screen-like)
-        edges = cv2.Canny(gray, 50, 150)
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        screen_detected_by_edges = False
-        if contours:
-            largest_contour = max(contours, key=cv2.contourArea)
-            if cv2.contourArea(largest_contour) > 1000:  # Larger threshold for robustness
-                x, y, w, h = cv2.boundingRect(largest_contour)
-                aspect_ratio = w / h
-                if 0.5 < aspect_ratio < 2.0 and w > 150 and h > 150:  # Typical screen aspect ratios
-                    screen_detected_by_edges = True
-                    logger.debug(f"Edge detection suggests screen: AR={aspect_ratio:.2f}, w={w}, h={h}")
-
-        # 2. Texture Analysis: Check entropy (screens have lower texture variation)
-        hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
-        hist_entropy = entropy(hist.ravel())
-        low_texture = hist_entropy < 5.0  # Lower entropy suggests uniform texture (screen-like)
-        logger.debug(f"Texture entropy: {hist_entropy:.2f}, Low texture: {low_texture}")
-
-        # 3. Color Uniformity: Check variance in color channels (screens tend to be uniform)
-        roi_rgb = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
-        color_variance = np.var(roi_rgb, axis=(0, 1))
-        uniform_color = all(var < 1000 for var in color_variance)  # Low variance suggests screen
-        logger.debug(f"Color variance: {color_variance}, Uniform: {uniform_color}")
-
-        # Decision: Combine multiple indicators
-        screen_indicators = sum([screen_detected_by_edges, low_texture, uniform_color])
-        is_screen = screen_indicators >= 2  # Require at least 2 out of 3 indicators
-        if is_screen:
-            logger.warning(f"Screen detected: Edges={screen_detected_by_edges}, Texture={low_texture}, Color={uniform_color}")
-        
-        return is_screen
+    previous_detections = {'count': 0, 'last_detected': False}
 
     while True:
         elapsed_time = time.time() - start_time
@@ -340,11 +369,11 @@ def mark_attendance_route(period_id):
                 x1, y1 = max(0, x1), max(0, y1)
                 x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
 
-                # Check if the face is on a screen
-                if is_screen_detected(frame, box):
+                screen_detected, previous_detections = is_screen_detected(frame, box, previous_detections)
+                if screen_detected:
                     cv2.putText(frame, "Screen Detected - No Attendance", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                    continue  # Skip attendance marking for this face
+                    continue
 
                 face = frame_rgb[y1:y2, x1:x2]
                 if face.size == 0 or face.shape[0] <= 0 or face.shape[1] <= 0:
@@ -382,6 +411,7 @@ def mark_attendance_route(period_id):
                                         mark_attendance(student_id, period_id, connection, is_within_time_limit=True)
                                         recognized_students.add(student_id)
                                         logger.info(f"Recognized and marked student ID {student_id} for period {period_id}")
+                                        messages.append({"category": "success", "text": f"Marked student ID {student_id} as present"})
                             except Exception as e:
                                 logger.error(f"Error parsing or querying student '{name}': {e}")
                 except Exception as e:
@@ -414,31 +444,52 @@ def mark_attendance_route(period_id):
                 )
                 connection.commit()
                 logger.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
-                absent_message = f"Marked {len(unmarked_students)} students as absent."
+                messages.append({"category": "success", "text": f"Marked {len(unmarked_students)} students as absent."})
             else:
                 logger.info(f"No students to mark as absent for period {period_id}")
-                absent_message = "No students to mark as absent."
+                messages.append({"category": "info", "text": "No students to mark as absent."})
         except Exception as e:
             logger.error(f"Error marking absent students: {e}")
             connection.rollback()
+            messages.append({"category": "error", "text": f"Error marking absent students: {str(e)}"})
 
     cap.release()
     cv2.destroyAllWindows()
     connection.close()
+    return jsonify({"status": "success", "messages": messages})
 
-    return jsonify({
-        "status": "success",
-        "message": "Attendance marking completed.",
-        "absent_message": absent_message,
-        "recognized_count": len(recognized_students)
-    })
+@app.route('/view_attendance/<int:period_id>')
+def view_attendance(period_id):
+    if 'teacher_id' not in session:
+        return jsonify({"status": "error", "message": "Please log in as a teacher."}), 401
 
-
+    connection = get_db_connection()
+    records = []
+    if connection:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT s.first_name, s.middle_name, s.last_name, s.rollno, a.status,
+                           TO_CHAR(a.recorded_timestamp, 'YYYY-MM-DD HH12:MI:SS AM') AS recorded_timestamp
+                    FROM Attendance a
+                    JOIN Students s ON a.student_id = s.student_id
+                    JOIN Class_Periods cp ON a.period_id = cp.period_id
+                    JOIN Courses c ON cp.course_id = c.course_id
+                    JOIN Course_Teacher ct ON c.course_id = ct.course_id
+                    WHERE a.period_id = %s AND ct.teacher_id = %s
+                """, (period_id, session['teacher_id']))
+                records = cursor.fetchall()
+        except Exception as e:
+            logger.error(f"Error fetching attendance records for period {period_id}: {e}")
+        finally:
+            connection.close()
+    if records:
+        return jsonify({"status": "success", "records": records})
+    return jsonify({"status": "error", "message": "No attendance records found or access denied."}), 404
 
 @app.route('/')
 def index():
     return redirect(url_for('capture'))
-
 
 @app.route('/capture', methods=['GET', 'POST'])
 def capture():
@@ -519,7 +570,7 @@ def course():
     if connection:
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT course_id, course_name FROM Courses ORDER BY course_name")
+                cursor.execute("SELECT course_id, course_name, semester FROM Courses ORDER BY semester, course_name")
                 courses = cursor.fetchall()
         finally:
             connection.close()
@@ -529,11 +580,12 @@ def course():
         start_time = request.form['start_time']
         period_date = request.form['period_date']
         duration = request.form.get('duration', '').strip()
+        semester = request.form.get('semester')  # Get semester from form
 
         try:
             duration = int(duration)
-            if duration < 45 or duration > 120:
-                flash("Duration must be between 45 and 120 minutes.", "error")
+            if duration < 45 or duration > 90:  # Matches template's min/max
+                flash("Duration must be between 45 and 90 minutes.", "error")
                 return redirect(url_for('course'))
         except ValueError:
             flash("Duration must be a valid integer.", "error")
@@ -548,16 +600,19 @@ def course():
             with connection.cursor() as cursor:
                 if course_option == 'new':
                     course_name = request.form['course_name'].strip()
-                    if not course_name:
-                        flash("Course name is required when adding a new course.", "error")
+                    if not course_name or not semester:
+                        flash("Course name and semester are required when adding a new course.", "error")
                         return redirect(url_for('course'))
-
+                    semester = int(semester)
+                    if semester < 1 or semester > 8:
+                        flash("Semester must be between 1 and 8.", "error")
+                        return redirect(url_for('course'))
                     cursor.execute(
-                        "INSERT INTO Courses (course_name, course_code) VALUES (%s, %s) RETURNING course_id",
-                        (course_name, f"{course_name[:3].upper()}101")
+                        "INSERT INTO Courses (course_name, course_code, semester) VALUES (%s, %s, %s) RETURNING course_id",
+                        (course_name, f"{course_name[:3].upper()}101", semester)
                     )
                     course_id = cursor.fetchone()[0]
-                    flash(f"New course {course_name} added successfully.", "success")
+                    flash(f"New course {course_name} (Semester {semester}) added successfully.", "success")
                 else:
                     course_id = course_option
                     cursor.execute("SELECT course_name FROM Courses WHERE course_id = %s", (course_id,))
@@ -629,10 +684,13 @@ def get_attendance(period_id):
     }
     return jsonify(attendance_data)
 
-
 @app.route('/attendance', methods=['GET', 'POST'])
 def attendance():
-    periods = get_periods()
+    if 'teacher_id' not in session:
+        flash("Please log in to access attendance.", "error")
+        return redirect(url_for('teacher.teacher_login'))
+    
+    periods = get_periods(session['teacher_id'])
     selected_period_id = request.form.get('period_id') or request.args.get('period_id')
     course_name = None
 

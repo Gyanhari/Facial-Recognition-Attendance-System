@@ -2,7 +2,17 @@
 <div class="content-card">
   <h2>Add Course or Class Period</h2>
   <form action="{{ url_for('course') }}" method="post">
-    <label for="course_option">Course Option:</label>
+    <!-- Semester Selection -->
+    <label for="semester">Semester:</label>
+    <select id="semester" name="semester" required onchange="filterCourses()">
+      <option value="">-- Select a Semester --</option>
+      {% for i in range(1, 9) %}
+      <option value="{{ i }}">{{ i }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Course Option -->
+    <label for="course_option">Course:</label>
     <select
       id="course_option"
       name="course_option"
@@ -12,10 +22,13 @@
       <option value="">-- Select a Course --</option>
       <option value="new">Add New Course</option>
       {% for course in courses %}
-      <option value="{{ course[0] }}">{{ course[1] }}</option>
+      <option value="{{ course[0] }}" data-semester="{{ course[2] }}">
+        {{ course[1] }}
+      </option>
       {% endfor %}
     </select>
 
+    <!-- New Course Fields -->
     <div id="new_course_field" style="display: none">
       <label for="course_name">New Course Name:</label>
       <input
@@ -23,9 +36,14 @@
         id="course_name"
         name="course_name"
         placeholder="Enter course name"
-      />
+      /><br />
+      <small
+        >The selected semester (above) will be applied to this new
+        course.</small
+      >
     </div>
 
+    <!-- Class Period Details -->
     <label for="period_date">Date:</label>
     <input type="date" id="period_date" name="period_date" required />
 
@@ -54,6 +72,29 @@
   {% endfor %} {% endif %} {% endwith %}
 
   <script>
+    function filterCourses() {
+      const selectedSemester = document.getElementById("semester").value;
+      const courseSelect = document.getElementById("course_option");
+      const options = courseSelect.getElementsByTagName("option");
+
+      courseSelect.value = "";
+      toggleCourseName();
+
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        const semester = option.getAttribute("data-semester");
+
+        if (option.value === "" || option.value === "new") {
+          option.style.display = "block";
+        } else if (!selectedSemester) {
+          option.style.display = "none"; // Hide all courses if no semester selected
+        } else {
+          option.style.display =
+            semester === selectedSemester ? "block" : "none";
+        }
+      }
+    }
+
     function toggleCourseName() {
       const courseOption = document.getElementById("course_option").value;
       const newCourseField = document.getElementById("new_course_field");
@@ -61,7 +102,9 @@
       newCourseField.style.display = courseOption === "new" ? "block" : "none";
       courseNameInput.required = courseOption === "new";
     }
-    toggleCourseName();
+
+    // Initialize on page load
+    filterCourses();
   </script>
 </div>
 {% endblock %}

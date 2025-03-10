@@ -1,7 +1,8 @@
-{% extends "index.html" %}
+{% extends "teacher/base.html" %}
 {% block content %}
 <div class="content-card">
     <h2>Attendance</h2>
+    <p>Welcome, {{ session['teacher_name'] }} | <a href="{{ url_for('teacher.teacher_logout') }}">Logout</a> | <a href="{{ url_for('teacher.teacher_dashboard') }}">Back to Dashboard</a></p>
 
     <form id="attendance-form">
         <label for="date_filter">Filter by Date:</label>
@@ -10,7 +11,7 @@
         <select id="period_id" name="period_id" required>
             {% for period in periods %}
             <option value="{{ period[0] }}" {% if period[0] == selected_period_id %}selected{% endif %} data-date="{{ period[2] }}">
-                {{ period[1] }} - {{ period[2] }} {{ period[3] }}
+                {{ period[1] }} - {{ period[2] }} {{ period[3] }} (Sem {{ period[5] }})
             </option>
             {% endfor %}
         </select>
@@ -106,19 +107,82 @@
             });
         });
 
-        // Handle View Attendance button click (placeholder)
+        // Handle View Attendance button click
         $('#view-attendance').on('click', function() {
             const periodId = $('#period_id').val();
             if (!periodId) {
-                $('#message').html('<div class="alert alert-error'>Please select a period.</div>');
+                $('#message').html('<div class="alert alert-error">Please select a period.</div>');
                 return;
             }
-            // Add logic to fetch and display attendance records here
             $('#message').html('<div class="alert alert-info">Fetching attendance records...</div>');
-            // Example: $.ajax call to fetch attendance data
+            $.ajax({
+                url: `/view_attendance/${periodId}`,
+                type: 'GET',
+                success: function(response) {
+                    $('#message').empty();
+                    if (response.status === 'success' && response.records) {
+                        const table = $('#attendance-table');
+                        table.empty();
+                        table.append(`
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">First Name</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Middle Name</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Last Name</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Roll No</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Status</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Timestamp</th>
+                            </tr>
+                        `);
+                        response.records.forEach(record => {
+                            table.append(`
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${record[0] || ''}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${record[1] || ''}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${record[2] || ''}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${record[3] || ''}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${record[4] || ''}</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${record[5] || ''}</td>
+                                </tr>
+                            `);
+                        });
+                        table.show();
+                    } else {
+                        $('#message').append('<div class="alert alert-error">Failed to fetch attendance records.</div>');
+                    }
+                },
+                error: function(xhr) {
+                    $('#message').empty();
+                    $('#message').append('<div class="alert alert-error">Failed to fetch attendance records.</div>');
+                }
+            });
         });
     </script>
 
-
+    <style>
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+        }
+        .alert-info {
+            background-color: #cce5ff;
+            color: #004085;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
 </div>
 {% endblock %}

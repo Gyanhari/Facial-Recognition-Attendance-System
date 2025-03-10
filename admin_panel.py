@@ -83,7 +83,7 @@ def get_all_courses():
     if connection:
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT course_id, course_name, course_code FROM Courses ORDER BY course_name")
+                cursor.execute("SELECT course_id, course_name, course_code, semester FROM Courses ORDER BY semester, course_name")
                 courses = cursor.fetchall()
         except Exception as e:
             logger.error(f"Error fetching courses: {e}")
@@ -99,7 +99,7 @@ def get_all_periods():
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration
+                    SELECT cp.period_id, c.course_name, cp.period_date, cp.start_time, cp.duration, c.semester
                     FROM Class_Periods cp
                     JOIN Courses c ON cp.course_id = c.course_id
                     ORDER BY cp.period_date, cp.start_time
@@ -204,7 +204,6 @@ def manage_students():
     students = get_all_students()
     return render_template('admin/students.html', students=students)
 
-
 # Course Management
 @admin_bp.route('/admin/courses', methods=['GET', 'POST'])
 def manage_courses():
@@ -217,12 +216,24 @@ def manage_courses():
 
         # Validate required fields
         course_name = request.form.get('course_name')
-        course_code = request.form.get('course_code')  
+        course_code = request.form.get('course_code')
+        semester = request.form.get('semester')
 
-        if action in ['add', 'edit'] and not course_name:
-            flash("Course Name is required.", "error")
-            logger.warning("Missing Course Name for course management.")
-            return redirect(url_for('admin.manage_courses'))
+        if action in ['add', 'edit']:
+            if not course_name or not semester:
+                flash("Course Name and Semester are required.", "error")
+                logger.warning("Missing Course Name or Semester for course management.")
+                return redirect(url_for('admin.manage_courses'))
+            try:
+                semester = int(semester)
+                if semester < 1 or semester > 8:
+                    flash("Semester must be between 1 and 8.", "error")
+                    logger.warning(f"Invalid semester value: {semester}")
+                    return redirect(url_for('admin.manage_courses'))
+            except ValueError:
+                flash("Semester must be a valid integer.", "error")
+                logger.warning(f"Invalid semester input: {semester}")
+                return redirect(url_for('admin.manage_courses'))
 
         connection = get_db_connection()
         if not connection:
@@ -236,13 +247,13 @@ def manage_courses():
                     course_name = course_name.strip()
                     course_code = course_code.strip() if course_code else f"{course_name[:3].upper()}101"
                     cursor.execute(
-                        "INSERT INTO Courses (course_name, course_code) VALUES (%s, %s) RETURNING course_id",
-                        (course_name, course_code)
+                        "INSERT INTO Courses (course_name, course_code, semester) VALUES (%s, %s, %s) RETURNING course_id",
+                        (course_name, course_code, semester)
                     )
                     course_id = cursor.fetchone()[0]
                     connection.commit()
-                    flash(f"Course {course_name} added successfully.", "success")
-                    logger.info(f"Added course: {course_name} (ID: {course_id})")
+                    flash(f"Course {course_name} (Semester {semester}) added successfully.", "success")
+                    logger.info(f"Added course: {course_name} (ID: {course_id}, Semester: {semester})")
                 elif action == 'edit':
                     course_id = request.form.get('course_id')
                     if not course_id:
@@ -252,12 +263,12 @@ def manage_courses():
                     course_name = course_name.strip()
                     course_code = course_code.strip() if course_code else f"{course_name[:3].upper()}101"
                     cursor.execute(
-                        "UPDATE Courses SET course_name = %s, course_code = %s WHERE course_id = %s",
-                        (course_name, course_code, course_id)
+                        "UPDATE Courses SET course_name = %s, course_code = %s, semester = %s WHERE course_id = %s",
+                        (course_name, course_code, semester, course_id)
                     )
                     connection.commit()
                     flash("Course updated successfully.", "success")
-                    logger.info(f"Updated course ID {course_id}: {course_name}")
+                    logger.info(f"Updated course ID {course_id}: {course_name} (Semester: {semester})")
                 elif action == 'delete':
                     course_id = request.form.get('course_id')
                     if not course_id:
@@ -370,7 +381,6 @@ def manage_periods():
     courses = get_all_courses()
     return render_template('admin/periods.html', periods=periods, courses=courses)
 
-
 @admin_bp.route('/admin/attendance/<int:period_id>', methods=['GET', 'POST'])
 def manage_attendance(period_id):
     connection = get_db_connection()
@@ -380,7 +390,6 @@ def manage_attendance(period_id):
         try:
             with connection.cursor() as cursor:
                 # Modify the query to format timestamp in AM/PM
-                # For PostgreSQL:
                 cursor.execute("""
                     SELECT s.first_name, s.middle_name, s.last_name, s.rollno, a.status, 
                            TO_CHAR(a.recorded_timestamp, 'YYYY-MM-DD HH12:MI:SS AM') AS recorded_timestamp
@@ -389,7 +398,6 @@ def manage_attendance(period_id):
                     WHERE a.period_id = %s
                 """, (period_id,))
                 
-                # For MySQL:
                 records = cursor.fetchall()
 
                 cursor.execute("""
@@ -462,7 +470,7 @@ def manage_attendance(period_id):
 # System Monitoring
 @admin_bp.route('/admin/monitor')
 def monitor_system():
-    log_file = os.path.join('logs','app.log')
+    log_file = os.path.join('logs', 'app.log')
     logs = []
     if os.path.exists(log_file):
         with open(log_file, 'r') as f:
@@ -502,38 +510,3 @@ def retrain_model():
         flash(f"Error during re-training: {str(e)}", "error")
 
     return redirect(url_for('admin.monitor_system'))
-
-
-# Settings
-@admin_bp.route('/admin/settings', methods=['GET', 'POST'])
-def manage_settings():
-    global DB_CONFIG
-    if request.method == 'POST':
-        new_config = {
-            'host': request.form.get('host', DB_CONFIG['host']),
-            'user': request.form.get('user', DB_CONFIG['user']),
-            'password': request.form.get('password', DB_CONFIG['password']),
-            'database': request.form.get('database', DB_CONFIG['database']),
-            'port': request.form.get('port', DB_CONFIG['port'])
-        }
-
-        # Test the new configuration before applying
-        try:
-            test_conn = psycopg2.connect(**new_config)
-            test_conn.close()
-            DB_CONFIG = new_config
-            flash("Database configuration updated successfully.", "success")
-            logger.info("Updated database configuration.")
-        except Exception as e:
-            flash(f"Error updating database configuration: {str(e)}", "error")
-            logger.error(f"Error updating database configuration: {str(e)}")
-        return redirect(url_for('admin.manage_settings'))
-
-    capture_params = {'num_frames': 100, 'duration': 10} 
-    training_params = {'epochs': 50, 'batch_size': 32, 'lr': 0.001, 'patience': 10}
-    return render_template('admin/settings.html', db_config=DB_CONFIG, capture_params=capture_params, training_params=training_params)    
-
-
-
-
-

@@ -2,21 +2,18 @@
 {% block content %}
 <h2>Manage Students</h2>
 
-<!-- <h3>Add Student</h3>
-<form method="POST">
-  <input type="hidden" name="action" value="add" />
-  <label>Roll No: <input type="text" name="rollno" required /></label><br />
-  <label>First Name: <input type="text" name="first_name" required /></label
-  ><br />
-  <label>Middle Name: <input type="text" name="middle_name" /></label><br />
-  <label>Last Name: <input type="text" name="last_name" required /></label
-  ><br />
-  <button type="submit">Add Student</button>
-</form> -->
-
 <h3>Existing Students</h3>
+<div>
+  <label for="rollno_filter">Filter by Roll No Prefix:</label>
+  <input
+    type="text"
+    id="rollno_filter"
+    onkeyup="filterStudents()"
+    placeholder="Enter roll no prefix"
+  />
+</div>
 {% if students %}
-<table>
+<table id="students_table">
   <tr>
     <th>S.N.</th>
     <th>Roll No</th>
@@ -26,7 +23,7 @@
     <th>Actions</th>
   </tr>
   {% for student in students %}
-  <tr>
+  <tr data-rollno="{{ student[1] }}">
     <td>{{ loop.index }}</td>
     <td>{{ student[1] }}</td>
     <td>{{ student[2] }}</td>
@@ -84,4 +81,19 @@
 </table>
 {% else %}
 <p>No students available.</p>
-{% endif %} {% endblock %}
+{% endif %}
+
+<script>
+  function filterStudents() {
+    const rollnoFilter = document
+      .getElementById("rollno_filter")
+      .value.toLowerCase();
+    const rows = document.querySelectorAll("#students_table tr[data-rollno]");
+
+    rows.forEach((row) => {
+      const rollno = row.getAttribute("data-rollno").toLowerCase();
+      row.style.display = rollno.startsWith(rollnoFilter) ? "" : "none";
+    });
+  }
+</script>
+{% endblock %}
