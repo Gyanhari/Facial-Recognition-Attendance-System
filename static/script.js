@@ -12,7 +12,7 @@ function filterPeriods() {
   if (periodSelect.value && periodSelect.options[periodSelect.selectedIndex].style.display === "none") {
       periodSelect.value = "";
   }
-  updateAttendanceButtonState(); // Update button state after filtering
+  updateAttendanceButtonState();
 }
 
 // Filter attendance records by status and date
@@ -52,7 +52,7 @@ function updateAttendanceButtonState() {
   }
 
   $.ajax({
-      url: `/check_period_status/${periodId}`, // New endpoint we'll define in Flask
+      url: `/check_period_status/${periodId}`,
       type: 'GET',
       success: function(response) {
           if (response.status === 'success') {
@@ -71,9 +71,6 @@ function updateAttendanceButtonState() {
   });
 }
 
-// Initial call to filter periods and set button state
-filterPeriods();
-
 // Trigger attendance marking
 $('#trigger-attendance').on('click', function() {
   const periodId = $('#period_id').val();
@@ -84,12 +81,12 @@ $('#trigger-attendance').on('click', function() {
       return;
   }
 
-  messageDiv.html('<div class="alert alert-info">Processing attendance...</div>');
+  messageDiv.html('<div class="alert alert-info">Processing attendance... (This may take up to 5 minutes)</div>');
 
   $.ajax({
       url: `/mark_attendance/${periodId}`,
       type: 'POST',
-      timeout: 310000, // 5 minutes + 10 seconds to account for webcam duration
+      timeout: 310000, // 5 minutes + 10 seconds
       success: function(response) {
           messageDiv.empty();
           if (response.status === 'success' && response.messages) {
@@ -97,8 +94,8 @@ $('#trigger-attendance').on('click', function() {
                   const alertClass = `alert-${msg.category === 'success' ? 'success' : msg.category === 'info' ? 'info' : 'danger'}`;
                   messageDiv.append(`<div class="alert ${alertClass}">${msg.text}</div>`);
               });
-              viewAttendance(periodId); // Refresh attendance table
-              updateAttendanceButtonState(); // Update button state after marking
+              viewAttendance(periodId); // Refresh table to show current state
+              updateAttendanceButtonState(); // Update button state
           } else {
               messageDiv.append(`<div class="alert alert-danger">${response.messages[0]?.text || 'An error occurred'}</div>`);
           }
@@ -144,7 +141,7 @@ function viewAttendance(periodId) {
                   </tr>`;
               tbody.append(row);
           });
-          filterAttendance(); // Apply filters after loading
+          filterAttendance();
       },
       error: function(xhr) {
           $('#message').html(`<div class="alert alert-danger">${xhr.responseJSON?.message || 'Failed to fetch attendance'}</div>`);
@@ -153,7 +150,10 @@ function viewAttendance(periodId) {
   });
 }
 
-// Update button state when period selection changes
-$('#period_id').on('change', function() {
-  updateAttendanceButtonState();
+// Initial setup
+$(document).ready(function() {
+  filterPeriods(); // Filter periods and set initial button state
+  $('#period_id').on('change', function() {
+      updateAttendanceButtonState(); // Update button state on period change
+  });
 });

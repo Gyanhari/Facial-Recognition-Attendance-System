@@ -19,7 +19,6 @@ import torch.nn as nn
 from facial_recognition.src.helper import admin_required
 import pandas as pd
 import logging
-from functools import wraps
 import pickle
 from flask_bcrypt import Bcrypt
 from teacher_panel import teacher_bp, init_bcrypt
@@ -456,31 +455,40 @@ def mark_attendance_route(period_id):
                 logger.info(f"User exited attendance marking after {elapsed_time / 60:.1f} minutes.")
                 break
 
-        # Mark all remaining students as absent immediately after camera closes
-        with connection.cursor() as cursor:
-            try:
-                all_students = {row[0] for row in cursor.execute("SELECT student_id FROM Students").fetchall()}
-                unmarked_students = all_students - recognized_students
+        # Check if period has ended after camera closes and mark absent if so
+        current_time = datetime.now()
+        if current_time > period_end:
+            with connection.cursor() as cursor:
+                try:
+                    all_students = {row[0] for row in cursor.execute("SELECT student_id FROM Students").fetchall()}
+                    unmarked_students = all_students - recognized_students
 
-                if unmarked_students:
-                    cursor.executemany(
-                        """
-                        INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
-                        VALUES (%s, %s, 'absent', NOW())
-                        ON CONFLICT (student_id, period_id) DO NOTHING
-                        """,
-                        [(student_id, period_id) for student_id in unmarked_students]
-                    )
-                    connection.commit()
-                    logger.info(f"Marked {len(unmarked_students)} students as absent after camera closed for period {period_id}")
-                    messages.append({"category": "success", "text": f"Marked {len(unmarked_students)} students as absent after closing the camera."})
-                else:
-                    logger.info(f"No students to mark as absent after camera closed for period {period_id}")
-                    messages.append({"category": "info", "text": "All students were marked during the session."})
-            except Exception as e:
-                logger.error(f"Error marking absent students after camera closed: {e}")
-                connection.rollback()
-                messages.append({"category": "error", "text": f"Error marking absent students after camera closed: {str(e)}"})
+                    if unmarked_students:
+                        cursor.executemany(
+                            """
+                            INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
+                            VALUES (%s, %s, 'absent', NOW())
+                            ON CONFLICT (student_id, period_id) DO NOTHING
+                            """,
+                            [(student_id, period_id) for student_id in unmarked_students]
+                        )
+                        connection.commit()
+                        logger.info(f"Period ended at {period_end}. Marked {len(unmarked_students)} students as absent after camera closed for period {period_id}")
+                        messages.append({"category": "success", "text": f"Period ended. Marked {len(unmarked_students)} students as absent."})
+                    else:
+                        logger.info(f"Period ended at {period_end}. No students to mark as absent for period {period_id}")
+                        messages.append({"category": "info", "text": "Period ended. All students were marked during the session."})
+                except Exception as e:
+                    logger.error(f"Error marking absent students after period ended: {e}")
+                    connection.rollback()
+                    messages.append({"category": "error", "text": f"Error marking absent students after period ended: {str(e)}"})
+        else:
+            # If period is still active, inform user of remaining unmarked students
+            unmarked_count = len(all_students) - len(recognized_students)
+            if unmarked_count > 0:
+                messages.append({"category": "info", "text": f"Camera closed. {unmarked_count} students remain unmarked. They will be marked absent when the period ends at {period_end.strftime('%I:%M %p')}."})
+            else:
+                messages.append({"category": "info", "text": "Camera closed. All students have been marked."})
 
     finally:
         cap.release()
@@ -488,7 +496,6 @@ def mark_attendance_route(period_id):
         connection.close()
 
     return jsonify({"status": "success", "messages": messages})
-
 
 @app.route('/view_attendance/<int:period_id>')
 def view_attendance(period_id):
@@ -840,13 +847,46 @@ def check_period_status(period_id):
                 "message": f"Period has not started yet. It starts at {period_start.strftime('%Y-%m-%d %I:%M %p')}."
             })
         elif current_time > period_end:
+            # Period has ended, mark all unmarked students as absent
+            with connection.cursor() as cursor:
+                try:
+                    # Get all students and marked students
+                    cursor.execute("SELECT student_id FROM Students")
+                    all_students = {row[0] for row in cursor.fetchall()}
+                    cursor.execute("SELECT student_id FROM Attendance WHERE period_id = %s", (period_id,))
+                    marked_students = {row[0] for row in cursor.fetchall()}
+                    unmarked_students = all_students - marked_students
+
+                    if unmarked_students:
+                        cursor.executemany(
+                            """
+                            INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
+                            VALUES (%s, %s, 'absent', NOW())
+                            ON CONFLICT (student_id, period_id) DO NOTHING
+                            """,
+                            [(student_id, period_id) for student_id in unmarked_students]
+                        )
+                        connection.commit()
+                        logger.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
+                        message = f"Period has ended at {period_end.strftime('%Y-%m-%d %I:%M %p')}. Marked {len(unmarked_students)} students as absent."
+                    else:
+                        logger.info(f"No unmarked students to mark as absent for period {period_id}")
+                        message = f"Period has ended at {period_end.strftime('%Y-%m-%d %I:%M %p')}. All students were already marked."
+                except Exception as e:
+                    connection.rollback()
+                    logger.error(f"Error marking absent students for period {period_id}: {e}")
+                    return jsonify({
+                        "status": "error",
+                        "messages": [{"category": "error", "text": f"Error marking absent students: {str(e)}"}]
+                    }), 500
+
             return jsonify({
                 "status": "success",
                 "can_mark": False,
-                "message": "Period has ended. All unmarked students have been marked as absent."
+                "message": message
             })
         else:
-            # Check for unmarked students
+            # Period is active, check for unmarked students
             with connection.cursor() as cursor:
                 cursor.execute("SELECT student_id FROM Students")
                 all_students = {row[0] for row in cursor.fetchall()}
@@ -869,7 +909,6 @@ def check_period_status(period_id):
 
     finally:
         connection.close()
-
 
 
 if __name__ == '__main__':
