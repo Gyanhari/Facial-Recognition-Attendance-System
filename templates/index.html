@@ -71,7 +71,10 @@
                     </li>
                     {% endif %}        
                     <li class="nav-item">
-                      <a class="nav-link" href="{{ url_for('attendance') }}">Attendance</a>
+                        <a class="nav-link" href="{{ url_for('attendance') }}">Attendance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('teacher.teacher_dashboard') }}">Teacher Dashboard</a>
                     </li>
                     <li class="nav-item">
                       <a class="nav-link" href="{{ url_for('teacher.teacher_logout') }}">Logout</a>

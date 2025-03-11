@@ -347,3 +347,112 @@ LINE 1: ...LECT teacher_id, first_name, last_name, password, is_admin F...
 2025-03-11 11:37:25,965 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
 2025-03-11 11:37:31,228 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
 2025-03-11 12:42:04,845 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 16:52:31,295 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 16:52:40,361 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 17:06:04,398 - INFO - Added teacher: Gyan Hari Dahal (ID: 4, Email: gyanharidahal1@gmail.com, Admin: False)
+2025-03-11 17:07:02,921 - INFO - Added course: Reter (ID: 7, Semester: 4, Teacher ID: 4)
+2025-03-11 17:07:40,607 - INFO - Successfully marked student ID 23 as present for period 10
+2025-03-11 17:07:40,608 - INFO - Recognized and marked student ID 23 for period 10
+2025-03-11 17:07:43,063 - INFO - Successfully marked student ID 27 as present for period 10
+2025-03-11 17:07:43,064 - INFO - Recognized and marked student ID 27 for period 10
+2025-03-11 17:07:46,457 - INFO - User exited attendance marking after 0.2 minutes.
+2025-03-11 17:07:46,476 - INFO - Marked 13 students as absent for period 10
+2025-03-11 17:52:08,327 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 17:52:36,711 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:00:27,631 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:27,657 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:33,989 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:33,991 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:34,486 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:34,487 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:34,688 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:34,689 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:34,874 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:34,876 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:35,043 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:35,045 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:35,213 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:35,214 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:35,382 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:35,383 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:35,544 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:35,546 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:35,730 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:35,732 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:35,889 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:35,891 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:36,065 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:36,066 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:36,253 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:36,256 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:36,425 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:36,426 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:00:36,587 - INFO - Period 10 has ended at 2025-03-11 17:52:00. Marking all unmarked students as absent.
+2025-03-11 18:00:36,589 - INFO - No unmarked students to mark as absent for period 10
+2025-03-11 18:02:43,434 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:02:54,240 - INFO - Successfully marked student ID 35 as present for period 11
+2025-03-11 18:02:54,241 - INFO - Recognized and marked student ID 35 for period 11
+2025-03-11 18:02:56,401 - INFO - Successfully marked student ID 27 as present for period 11
+2025-03-11 18:02:56,401 - INFO - Recognized and marked student ID 27 for period 11
+2025-03-11 18:03:05,467 - INFO - User exited attendance marking after 0.2 minutes.
+2025-03-11 18:03:05,479 - INFO - Marked 13 students as absent for period 11
+2025-03-11 18:12:47,765 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:12:47,766 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:12:47,768 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:12:47,768 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:12:53,313 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:12:53,313 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:12:53,315 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:12:53,315 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:12:53,829 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:12:53,831 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:12:53,831 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:12:53,834 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:13:08,052 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:13:08,052 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:13:08,055 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:13:08,055 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:13:23,135 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:13:23,137 - INFO - Period 9 has ended at 2025-03-11 11:46:00. Marking all unmarked students as absent.
+2025-03-11 18:13:23,137 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:13:23,141 - INFO - No unmarked students to mark as absent for period 9
+2025-03-11 18:13:44,636 - INFO - Added course: Hello (ID: 8, Semester: 5, Teacher ID: 1)
+2025-03-11 18:16:29,371 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:16:35,781 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:16:52,878 - INFO - Successfully marked student ID 35 as present for period 12
+2025-03-11 18:16:52,879 - INFO - Recognized and marked student ID 35 for period 12
+2025-03-11 18:16:53,995 - INFO - Successfully marked student ID 23 as present for period 12
+2025-03-11 18:16:53,996 - INFO - Recognized and marked student ID 23 for period 12
+2025-03-11 18:16:57,769 - INFO - User exited attendance marking after 0.1 minutes.
+2025-03-11 18:16:57,783 - INFO - Marked 13 students as absent for period 12
+2025-03-11 18:17:06,361 - INFO - Student ID 35 already marked with status present for period 12
+2025-03-11 18:17:06,362 - INFO - Recognized and marked student ID 35 for period 12
+2025-03-11 18:19:13,009 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:19:17,970 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:19:35,102 - INFO - Student ID 35 already marked with status present for period 12
+2025-03-11 18:19:35,102 - INFO - Recognized and marked student ID 35 for period 12
+2025-03-11 18:19:37,147 - INFO - Student ID 23 already marked with status present for period 12
+2025-03-11 18:19:37,147 - INFO - Recognized and marked student ID 23 for period 12
+2025-03-11 18:19:37,643 - INFO - User exited attendance marking after 0.1 minutes.
+2025-03-11 18:19:37,646 - INFO - Marked 13 students as absent for period 12
+2025-03-11 18:21:16,594 - INFO - Student ID 23 already marked with status present for period 12
+2025-03-11 18:21:16,595 - INFO - Recognized and marked student ID 23 for period 12
+2025-03-11 18:31:21,582 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:31:26,634 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:33:39,852 - INFO - Successfully marked student ID 35 as present for period 13
+2025-03-11 18:33:39,871 - INFO - Recognized and marked student ID 35 for period 13
+2025-03-11 18:33:44,436 - INFO - Successfully marked student ID 25 as present for period 13
+2025-03-11 18:33:44,437 - INFO - Recognized and marked student ID 25 for period 13
+2025-03-11 18:33:45,148 - INFO - Successfully marked student ID 27 as present for period 13
+2025-03-11 18:33:45,148 - INFO - Recognized and marked student ID 27 for period 13
+2025-03-11 18:33:45,247 - INFO - User exited attendance marking after 0.1 minutes.
+2025-03-11 18:33:45,248 - ERROR - Error marking absent students: 'NoneType' object has no attribute 'fetchall'
+2025-03-11 18:34:02,718 - INFO - Student ID 35 already marked with status present for period 13
+2025-03-11 18:34:02,719 - INFO - Recognized and marked student ID 35 for period 13
+2025-03-11 18:37:45,304 - INFO - Loaded classifier with 15 classes: ['770033-Hero_Honda', '770302-Arbin_Thaku', '770303-Ankit_Rawal', '770307-Asmita_Shrestha', '770309-Creation_Pradhan', '770312-Gyan_Hari_Dahal', '770313-Janak_Joshi', '770315-Jenisha_Shrestha', '770317-Krishna_Shrestha', '770318-Kritima_Shrestha', '770329-Piyush_Gwayamaru', '770334-Sarif_Tachamo', '770336-Saragam_Adhikari', '770348-yubaraj_poduel', '777777-Bad_Soda']
+2025-03-11 18:38:00,116 - INFO - Student ID 35 already marked with status present for period 13
+2025-03-11 18:38:00,116 - INFO - Recognized and marked student ID 35 for period 13
+2025-03-11 18:38:02,666 - INFO - User exited attendance marking after 0.1 minutes.
+2025-03-11 18:38:02,668 - ERROR - Error marking absent students after camera closed: 'NoneType' object has no attribute 'fetchall'
+2025-03-11 18:38:10,801 - INFO - Student ID 35 already marked with status present for period 13
+2025-03-11 18:38:10,802 - INFO - Recognized and marked student ID 35 for period 13

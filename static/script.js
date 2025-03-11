@@ -1,112 +1,159 @@
-$(document).ready(function () {
-  // Trigger Attendance with AJAX
-  $("#trigger-attendance").on("click", function () {
-    var period_id = $("#period_id").val();
-    if (!period_id) {
-      $("#message").text("Please select a period.").addClass("error");
-      $("#screen-detection-message").text("");
-      return;
-    }
+// Filter periods by date
+function filterPeriods() {
+  const dateFilter = document.getElementById("date_filter").value;
+  const periodSelect = document.getElementById("period_id");
+  const options = periodSelect.getElementsByTagName("option");
 
-    $("#message").text("Starting attendance marking...").removeClass("error");
-    $("#screen-detection-message").text("");
-    $.ajax({
-      url: "/mark_attendance/" + period_id,
-      type: "POST",
-      dataType: "json",
-      success: function (data) {
-        if (data.status === "success") {
-          $("#message")
-            .text(data.message + " " + data.absent_message + " Recognized: " + data.recognized_count)
-            .removeClass("error");
-          if (data.screen_detected_count > 0) {
-            $("#screen-detection-message").text(
-              "Warning: Skipped " + data.screen_detected_count + " face(s) detected on screens."
-            );
+  for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      const optionDate = option.getAttribute("data-date");
+      option.style.display = (!dateFilter || optionDate === dateFilter) ? "block" : "none";
+  }
+  if (periodSelect.value && periodSelect.options[periodSelect.selectedIndex].style.display === "none") {
+      periodSelect.value = "";
+  }
+  updateAttendanceButtonState(); // Update button state after filtering
+}
+
+// Filter attendance records by status and date
+function filterAttendance() {
+  const statusFilter = document.getElementById("status_filter").value.toLowerCase();
+  const dateFilter = document.getElementById("date_filter").value;
+  const rows = document.querySelectorAll("#attendance-table tbody tr");
+
+  rows.forEach(row => {
+      const status = row.cells[4].textContent.toLowerCase();
+      const timestamp = row.cells[5].textContent;
+      const rowDate = timestamp.split(" ")[0]; // Extract date from timestamp (e.g., "2025-03-10")
+
+      const matchesStatus = !statusFilter || status === statusFilter;
+      const matchesDate = !dateFilter || rowDate === dateFilter;
+
+      row.style.display = (matchesStatus && matchesDate) ? "" : "none";
+  });
+
+  const visibleRows = Array.from(rows).filter(row => row.style.display !== "none");
+  document.getElementById("attendance-table").style.display = visibleRows.length > 0 ? "" : "none";
+  if (visibleRows.length === 0 && rows.length > 0) {
+      document.getElementById("message").innerHTML = '<div class="alert alert-info">No records match the selected filters.</div>';
+  }
+}
+
+// Check period status and unmarked students, then update button state
+function updateAttendanceButtonState() {
+  const periodId = $('#period_id').val();
+  const triggerButton = $('#trigger-attendance');
+  const messageDiv = $('#message');
+
+  if (!periodId) {
+      triggerButton.prop('disabled', true);
+      messageDiv.html('<div class="alert alert-warning">Please select a period.</div>');
+      return;
+  }
+
+  $.ajax({
+      url: `/check_period_status/${periodId}`, // New endpoint we'll define in Flask
+      type: 'GET',
+      success: function(response) {
+          if (response.status === 'success') {
+              const { can_mark, message } = response;
+              triggerButton.prop('disabled', !can_mark);
+              messageDiv.html(`<div class="alert alert-${can_mark ? 'info' : 'warning'}">${message}</div>`);
           } else {
-            $("#screen-detection-message").text("No screens detected.");
+              triggerButton.prop('disabled', true);
+              messageDiv.html(`<div class="alert alert-danger">${response.messages[0].text}</div>`);
           }
-          $("#view-attendance").click(); // Auto-refresh attendance view
-        } else {
-          $("#message").text(data.message).addClass("error");
-          $("#screen-detection-message").text("");
-        }
       },
-      error: function (xhr, status, error) {
-        $("#message")
-          .text("Error triggering attendance: " + error)
-          .addClass("error");
-        $("#screen-detection-message").text("");
-        console.log("Error:", error);
-      },
-    });
+      error: function(xhr) {
+          triggerButton.prop('disabled', true);
+          messageDiv.html(`<div class="alert alert-danger">${xhr.responseJSON?.message || 'Failed to check period status'}</div>`);
+      }
   });
+}
 
-  // View Attendance with AJAX
-  $("#view-attendance").on("click", function () {
-    var period_id = $("#period_id").val();
-    if (!period_id) {
-      $("#message").text("Please select a period.").addClass("error");
-      $("#screen-detection-message").text("");
+// Initial call to filter periods and set button state
+filterPeriods();
+
+// Trigger attendance marking
+$('#trigger-attendance').on('click', function() {
+  const periodId = $('#period_id').val();
+  const messageDiv = $('#message');
+
+  if (!periodId) {
+      messageDiv.html('<div class="alert alert-danger">Please select a period.</div>');
       return;
-    }
+  }
 
-    $.ajax({
-      url: "/get_attendance/" + period_id,
-      type: "GET",
-      dataType: "json",
-      success: function (data) {
-        $("#attendance-table").empty();
-        if (data.records.length > 0) {
-          $("#attendance-heading").text(
-            "Attendance Record For " + data.course_name + " on " + data.date
-          );
-          $("#attendance-table").show();
-          var headerRow =
-            "<tr style='background-color: #f2f2f2;'><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>First Name</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Middle Name</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Last Name</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Roll No</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Status</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Timestamp</th></tr>";
-          $("#attendance-table").append(headerRow);
-          $.each(data.records, function (index, record) {
-            var row =
-              "<tr>" +
-              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
-              record.first_name +
-              "</td>" +
-              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
-              record.middle_name +
-              "</td>" +
-              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
-              record.last_name +
-              "</td>" +
-              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
-              record.roll_no +
-              "</td>" +
-              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
-              record.status +
-              "</td>" +
-              "<td style='border: 1px solid #ddd; padding: 8px;'>" +
-              record.timestamp +
-              "</td>" +
-              "</tr>";
-            $("#attendance-table").append(row);
-          });
-          $("#message").text("").removeClass("error");
-        } else {
-          $("#attendance-heading").text(
-            "Attendance Record For " + data.course_name + " on " + data.date
-          );
-          $("#attendance-table").hide();
-          $("#message")
-            .text("No attendance records found.")
-            .removeClass("error");
-        }
+  messageDiv.html('<div class="alert alert-info">Processing attendance...</div>');
+
+  $.ajax({
+      url: `/mark_attendance/${periodId}`,
+      type: 'POST',
+      timeout: 310000, // 5 minutes + 10 seconds to account for webcam duration
+      success: function(response) {
+          messageDiv.empty();
+          if (response.status === 'success' && response.messages) {
+              response.messages.forEach(msg => {
+                  const alertClass = `alert-${msg.category === 'success' ? 'success' : msg.category === 'info' ? 'info' : 'danger'}`;
+                  messageDiv.append(`<div class="alert ${alertClass}">${msg.text}</div>`);
+              });
+              viewAttendance(periodId); // Refresh attendance table
+              updateAttendanceButtonState(); // Update button state after marking
+          } else {
+              messageDiv.append(`<div class="alert alert-danger">${response.messages[0]?.text || 'An error occurred'}</div>`);
+          }
       },
-      error: function (xhr, status, error) {
-        $("#message")
-          .text("Error fetching attendance: " + error)
-          .addClass("error");
-        $("#screen-detection-message").text("");
-        console.log("Error:", error);
-      },
-    });
+      error: function(xhr) {
+          messageDiv.empty();
+          const response = xhr.responseJSON || { messages: [{ text: 'Unknown error' }] };
+          messageDiv.append(`<div class="alert alert-danger">${response.messages[0].text || 'Failed to process attendance'}</div>`);
+      }
   });
+});
+
+// View attendance records
+$('#view-attendance').on('click', function() {
+  const periodId = $('#period_id').val();
+  if (!periodId) {
+      $('#message').html('<div class="alert alert-danger">Please select a period.</div>');
+      return;
+  }
+  viewAttendance(periodId);
+});
+
+// Fetch and display attendance records
+function viewAttendance(periodId) {
+  $.ajax({
+      url: `/get_attendance/${periodId}`,
+      type: 'GET',
+      success: function(data) {
+          $('#message').html('<div class="alert alert-info">Attendance records loaded.</div>');
+          const tbody = $('#attendance-table tbody');
+          tbody.empty();
+          $('#attendance-table').show();
+
+          data.records.forEach(record => {
+              const row = `
+                  <tr>
+                      <td>${record.first_name}</td>
+                      <td>${record.middle_name || ''}</td>
+                      <td>${record.last_name}</td>
+                      <td>${record.roll_no}</td>
+                      <td>${record.status}</td>
+                      <td>${record.timestamp}</td>
+                  </tr>`;
+              tbody.append(row);
+          });
+          filterAttendance(); // Apply filters after loading
+      },
+      error: function(xhr) {
+          $('#message').html(`<div class="alert alert-danger">${xhr.responseJSON?.message || 'Failed to fetch attendance'}</div>`);
+          $('#attendance-table').hide();
+      }
+  });
+}
+
+// Update button state when period selection changes
+$('#period_id').on('change', function() {
+  updateAttendanceButtonState();
 });

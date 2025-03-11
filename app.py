@@ -291,7 +291,7 @@ def mark_attendance_route(period_id):
             connection.close()
             return jsonify({"status": "error", "messages": messages}), 403
 
-    # Check if the period has ended
+    # Check period timing and unmarked students
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -313,6 +313,13 @@ def mark_attendance_route(period_id):
     period_end = period_start + timedelta(minutes=duration)
     current_time = datetime.now()
 
+    # Check if the period has not started yet
+    if current_time < period_start:
+        messages.append({"category": "error", "text": f"Period has not started yet. It starts at {period_start.strftime('%Y-%m-%d %I:%M %p')}."})
+        connection.close()
+        return jsonify({"status": "error", "messages": messages}), 400
+
+    # Check if the period has ended
     if current_time > period_end:
         logger.info(f"Period {period_id} has ended at {period_end}. Marking all unmarked students as absent.")
         with connection.cursor() as cursor:
@@ -337,7 +344,7 @@ def mark_attendance_route(period_id):
                     messages.append({"category": "success", "text": f"Marked {len(unmarked_students)} students as absent due to period end."})
                 else:
                     logger.info(f"No unmarked students to mark as absent for period {period_id}")
-                    messages.append({"category": "info", "text": "No unmarked students to mark as absent."})
+                    messages.append({"category": "info", "text": "All students have been marked for this period."})
             except Exception as e:
                 logger.error(f"Error marking absent students: {e}")
                 connection.rollback()
@@ -345,126 +352,143 @@ def mark_attendance_route(period_id):
             connection.close()
             return jsonify({"status": "success", "messages": messages})
 
-    # Proceed with live attendance if period is active
+    # Check if there are any unmarked students during an active period
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT student_id FROM Students")
+        all_students = {row[0] for row in cursor.fetchall()}
+        cursor.execute("SELECT student_id FROM Attendance WHERE period_id = %s", (period_id,))
+        marked_students = {row[0] for row in cursor.fetchall()}
+        unmarked_students = all_students - marked_students
+
+        if not unmarked_students:
+            messages.append({"category": "info", "text": "All students have already been marked for this period."})
+            connection.close()
+            return jsonify({"status": "success", "messages": messages})
+
+    # Proceed with live attendance if period is active and there are unmarked students
+    messages.append({"category": "info", "text": f"Starting attendance marking for period {period_id}. {len(unmarked_students)} students remain unmarked."})
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         messages.append({"category": "error", "text": "Error: Could not open camera."})
         connection.close()
         return jsonify({"status": "error", "messages": messages}), 500
 
-    time_limit = 300
+    time_limit = 300  # 5 minutes
     recognized_students = set()
     start_time = time.time()
     previous_detections = {'count': 0, 'last_detected': False}
 
-    while True:
-        elapsed_time = time.time() - start_time
-        if elapsed_time > time_limit:
-            logger.info("5-minute time limit reached. Stopping webcam.")
-            break
+    try:
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > time_limit:
+                logger.info("5-minute time limit reached. Stopping webcam.")
+                break
 
-        ret, frame = cap.read()
-        if not ret:
-            logger.error("Error: Failed to capture frame.")
-            break
+            ret, frame = cap.read()
+            if not ret:
+                logger.error("Error: Failed to capture frame.")
+                break
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        boxes, _ = mtcnn.detect(frame_rgb)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            boxes, _ = mtcnn.detect(frame_rgb)
 
-        if boxes is not None and len(boxes) > 0:
-            for box in boxes:
-                x1, y1, x2, y2 = [int(coord) for coord in box]
-                x1, y1 = max(0, x1), max(0, y1)
-                x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
+            if boxes is not None and len(boxes) > 0:
+                for box in boxes:
+                    x1, y1, x2, y2 = [int(coord) for coord in box]
+                    x1, y1 = max(0, x1), max(0, y1)
+                    x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
 
-                screen_detected, previous_detections = is_screen_detected(frame, box, previous_detections)
-                if screen_detected:
-                    cv2.putText(frame, "Screen Detected - No Attendance", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                    continue
+                    screen_detected, previous_detections = is_screen_detected(frame, box, previous_detections)
+                    if screen_detected:
+                        cv2.putText(frame, "Screen Detected - No Attendance", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                        continue
 
-                face = frame_rgb[y1:y2, x1:x2]
-                if face.size == 0 or face.shape[0] <= 0 or face.shape[1] <= 0:
-                    continue
+                    face = frame_rgb[y1:y2, x1:x2]
+                    if face.size == 0 or face.shape[0] <= 0 or face.shape[1] <= 0:
+                        continue
 
-                face_pil = Image.fromarray(face)
-                try:
-                    face_cropped = mtcnn(face_pil)
-                    if face_cropped is not None and len(face_cropped) > 0:
-                        name, prob = recognize_face(face_cropped[0])
-                        label = f"{name} ({prob:.2f})" if name and prob > 0.7 else "Unknown"
-                        cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    face_pil = Image.fromarray(face)
+                    try:
+                        face_cropped = mtcnn(face_pil)
+                        if face_cropped is not None and len(face_cropped) > 0:
+                            name, prob = recognize_face(face_cropped[0])
+                            label = f"{name} ({prob:.2f})" if name and prob > 0.7 else "Unknown"
+                            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                        if name and prob > 0.7:
-                            try:
-                                rollno_part, name_part = name.split('-', 1)
-                                name_parts = name_part.split('_')
-                                if len(name_parts) < 2:
-                                    raise ValueError("Invalid name format")
-                                first_name = name_parts[0]
-                                last_name = name_parts[-1]
+                            if name and prob > 0.7:
+                                try:
+                                    rollno_part, name_part = name.split('-', 1)
+                                    name_parts = name_part.split('_')
+                                    if len(name_parts) < 2:
+                                        raise ValueError("Invalid name format")
+                                    first_name = name_parts[0]
+                                    last_name = name_parts[-1]
 
-                                with connection.cursor() as cursor:
-                                    cursor.execute(
-                                        """
-                                        SELECT student_id
-                                        FROM Students
-                                        WHERE rollno = %s AND LOWER(first_name) = LOWER(%s) AND LOWER(last_name) = LOWER(%s)
-                                        """,
-                                        (rollno_part, first_name, last_name)
-                                    )
-                                    student = cursor.fetchone()
-                                    if student and student[0] not in recognized_students:
-                                        student_id = student[0]
-                                        mark_attendance(student_id, period_id, connection, is_within_time_limit=True)
-                                        recognized_students.add(student_id)
-                                        logger.info(f"Recognized and marked student ID {student_id} for period {period_id}")
-                                        messages.append({"category": "success", "text": f"Marked student ID {student_id} as present"})
-                            except Exception as e:
-                                logger.error(f"Error parsing or querying student '{name}': {e}")
-                except Exception as e:
-                    logger.error(f"Error processing face with MTCNN: {e}")
+                                    with connection.cursor() as cursor:
+                                        cursor.execute(
+                                            """
+                                            SELECT student_id
+                                            FROM Students
+                                            WHERE rollno = %s AND LOWER(first_name) = LOWER(%s) AND LOWER(last_name) = LOWER(%s)
+                                            """,
+                                            (rollno_part, first_name, last_name)
+                                        )
+                                        student = cursor.fetchone()
+                                        if student and student[0] not in recognized_students:
+                                            student_id = student[0]
+                                            mark_attendance(student_id, period_id, connection, is_within_time_limit=True)
+                                            recognized_students.add(student_id)
+                                            logger.info(f"Recognized and marked student ID {student_id} for period {period_id}")
+                                            messages.append({"category": "success", "text": f"Marked student ID {student_id} as present"})
+                                except Exception as e:
+                                    logger.error(f"Error parsing or querying student '{name}': {e}")
+                    except Exception as e:
+                        logger.error(f"Error processing face with MTCNN: {e}")
 
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        else:
-            logger.warning("No faces detected in the current frame.")
-
-        cv2.imshow('Mark Attendance', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            logger.info(f"User exited attendance marking after {elapsed_time / 60:.1f} minutes.")
-            break
-
-    # Mark all remaining students as absent after live attendance
-    with connection.cursor() as cursor:
-        try:
-            cursor.execute("SELECT student_id FROM Students")
-            all_students = {row[0] for row in cursor.fetchall()}
-            unmarked_students = all_students - recognized_students
-
-            if unmarked_students:
-                cursor.executemany(
-                    """
-                    INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
-                    VALUES (%s, %s, 'absent', NOW())
-                    ON CONFLICT (student_id, period_id) DO NOTHING
-                    """,
-                    [(student_id, period_id) for student_id in unmarked_students]
-                )
-                connection.commit()
-                logger.info(f"Marked {len(unmarked_students)} students as absent for period {period_id}")
-                messages.append({"category": "success", "text": f"Marked {len(unmarked_students)} students as absent."})
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             else:
-                logger.info(f"No students to mark as absent for period {period_id}")
-                messages.append({"category": "info", "text": "No students to mark as absent."})
-        except Exception as e:
-            logger.error(f"Error marking absent students: {e}")
-            connection.rollback()
-            messages.append({"category": "error", "text": f"Error marking absent students: {str(e)}"})
+                logger.warning("No faces detected in the current frame.")
 
-    cap.release()
-    cv2.destroyAllWindows()
-    connection.close()
+            cv2.imshow('Mark Attendance', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                logger.info(f"User exited attendance marking after {elapsed_time / 60:.1f} minutes.")
+                break
+
+        # Mark all remaining students as absent immediately after camera closes
+        with connection.cursor() as cursor:
+            try:
+                all_students = {row[0] for row in cursor.execute("SELECT student_id FROM Students").fetchall()}
+                unmarked_students = all_students - recognized_students
+
+                if unmarked_students:
+                    cursor.executemany(
+                        """
+                        INSERT INTO Attendance (student_id, period_id, status, recorded_timestamp)
+                        VALUES (%s, %s, 'absent', NOW())
+                        ON CONFLICT (student_id, period_id) DO NOTHING
+                        """,
+                        [(student_id, period_id) for student_id in unmarked_students]
+                    )
+                    connection.commit()
+                    logger.info(f"Marked {len(unmarked_students)} students as absent after camera closed for period {period_id}")
+                    messages.append({"category": "success", "text": f"Marked {len(unmarked_students)} students as absent after closing the camera."})
+                else:
+                    logger.info(f"No students to mark as absent after camera closed for period {period_id}")
+                    messages.append({"category": "info", "text": "All students were marked during the session."})
+            except Exception as e:
+                logger.error(f"Error marking absent students after camera closed: {e}")
+                connection.rollback()
+                messages.append({"category": "error", "text": f"Error marking absent students after camera closed: {str(e)}"})
+
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+        connection.close()
+
     return jsonify({"status": "success", "messages": messages})
+
 
 @app.route('/view_attendance/<int:period_id>')
 def view_attendance(period_id):
@@ -765,6 +789,88 @@ def train():
         return redirect(url_for('train'))
 
     return render_template('train.html')
+
+@app.route('/check_period_status/<int:period_id>', methods=['GET'])
+def check_period_status(period_id):
+    if 'teacher_id' not in session:
+        return jsonify({"status": "error", "messages": [{"category": "error", "text": "Please log in as a teacher."}]}), 401
+
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({"status": "error", "messages": [{"category": "error", "text": "Error connecting to database."}]}), 500
+
+    try:
+        # Verify teacher has access to this period
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 1
+                FROM Class_Periods cp
+                JOIN Courses c ON cp.course_id = c.course_id
+                JOIN Course_Teacher ct ON c.course_id = ct.course_id
+                WHERE cp.period_id = %s AND ct.teacher_id = %s
+            """, (period_id, session['teacher_id']))
+            if not cursor.fetchone():
+                return jsonify({"status": "error", "messages": [{"category": "error", "text": "You do not have permission to access this period."}]}), 403
+
+        # Check period timing
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT period_date, start_time, duration
+                FROM Class_Periods
+                WHERE period_id = %s
+                """,
+                (period_id,)
+            )
+            period_info = cursor.fetchone()
+
+        if not period_info:
+            return jsonify({"status": "error", "messages": [{"category": "error", "text": "Invalid period_id"}]}), 404
+
+        period_date, start_time, duration = period_info
+        period_start = datetime.combine(period_date, start_time)
+        period_end = period_start + timedelta(minutes=duration)
+        current_time = datetime.now()
+
+        # Check conditions
+        if current_time < period_start:
+            return jsonify({
+                "status": "success",
+                "can_mark": False,
+                "message": f"Period has not started yet. It starts at {period_start.strftime('%Y-%m-%d %I:%M %p')}."
+            })
+        elif current_time > period_end:
+            return jsonify({
+                "status": "success",
+                "can_mark": False,
+                "message": "Period has ended. All unmarked students have been marked as absent."
+            })
+        else:
+            # Check for unmarked students
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT student_id FROM Students")
+                all_students = {row[0] for row in cursor.fetchall()}
+                cursor.execute("SELECT student_id FROM Attendance WHERE period_id = %s", (period_id,))
+                marked_students = {row[0] for row in cursor.fetchall()}
+                unmarked_students = all_students - marked_students
+
+                if not unmarked_students:
+                    return jsonify({
+                        "status": "success",
+                        "can_mark": False,
+                        "message": "All students have already been marked for this period."
+                    })
+                else:
+                    return jsonify({
+                        "status": "success",
+                        "can_mark": True,
+                        "message": f"{len(unmarked_students)} students remain unmarked. Ready to start attendance marking."
+                    })
+
+    finally:
+        connection.close()
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
