@@ -1,6 +1,6 @@
 uploaded_users.txt
 __pycache__
 venv
-logs
+logs/
 attendance_records
 .python-version

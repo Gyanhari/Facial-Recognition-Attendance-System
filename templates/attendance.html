@@ -16,6 +16,7 @@
                 <div class="col-md-5">
                     <label for="period_id" class="form-label">Select Period:</label>
                     <select id="period_id" name="period_id" class="form-select" required>
+                        <option value="" disabled selected>Select a period</option>
                         {% for period in periods %}
                         <option value="{{ period[0] }}" {% if period[0] == selected_period_id %}selected{% endif %} data-date="{{ period[2] }}">
                             {{ period[1] }} - {{ period[2] }} {{ period[3] }} ({{ period[4] }} min)
@@ -33,12 +34,12 @@
         <div id="attendance-records">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3 id="attendance-heading" class="mb-0">Attendance Record</h3>
-                <div>
+                <div class="d-flex align-items-center gap-2">
                     <label for="status_filter" class="form-label me-2">Filter by Status:</label>
                     <select id="status_filter" class="form-select d-inline-block w-auto" onchange="filterAttendance()">
                         <option value="">All</option>
-                        <option value="Present">Present</option>
-                        <option value="Absent">Absent</option>
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
                     </select>
                 </div>
             </div>
@@ -64,6 +65,7 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="{{ url_for('static', filename='script.js') }}"></script>
         <script>
+            // Filter periods by date
             function filterPeriods() {
                 const dateFilter = document.getElementById("date_filter").value;
                 const periodSelect = document.getElementById("period_id");
@@ -79,18 +81,35 @@
                 }
             }
 
+            // Filter attendance records by status and date
             function filterAttendance() {
                 const statusFilter = document.getElementById("status_filter").value.toLowerCase();
+                const dateFilter = document.getElementById("date_filter").value;
                 const rows = document.querySelectorAll("#attendance-table tbody tr");
 
                 rows.forEach(row => {
                     const status = row.cells[4].textContent.toLowerCase();
-                    row.style.display = (!statusFilter || status === statusFilter) ? "" : "none";
+                    const timestamp = row.cells[5].textContent;
+                    const rowDate = timestamp.split(" ")[0]; // Extract date from timestamp (e.g., "2025-03-10")
+
+                    const matchesStatus = !statusFilter || status === statusFilter;
+                    const matchesDate = !dateFilter || rowDate === dateFilter;
+
+                    row.style.display = (matchesStatus && matchesDate) ? "" : "none";
                 });
+
+                // Update visibility of table if no rows match
+                const visibleRows = Array.from(rows).filter(row => row.style.display !== "none");
+                document.getElementById("attendance-table").style.display = visibleRows.length > 0 ? "" : "none";
+                if (visibleRows.length === 0 && rows.length > 0) {
+                    document.getElementById("message").innerHTML = '<div class="alert alert-info">No records match the selected filters.</div>';
+                }
             }
 
+            // Initial call to filter periods
             filterPeriods();
 
+            // Trigger attendance marking
             $('#trigger-attendance').on('click', function() {
                 const periodId = $('#period_id').val();
                 if (!periodId) {
@@ -123,6 +142,7 @@
                 });
             });
 
+            // View attendance records
             $('#view-attendance').on('click', function() {
                 const periodId = $('#period_id').val();
                 if (!periodId) {
@@ -132,6 +152,7 @@
                 viewAttendance(periodId);
             });
 
+            // Fetch and display attendance records
             function viewAttendance(periodId) {
                 $.ajax({
                     url: `/get_attendance/${periodId}`,
@@ -154,17 +175,18 @@
                                 </tr>`;
                             tbody.append(row);
                         });
-                        filterAttendance();
+                        filterAttendance(); // Apply filters after loading
                     },
                     error: function(xhr) {
                         $('#message').html(`<div class="alert alert-danger">${xhr.responseJSON?.message || 'Failed to fetch attendance'}</div>`);
+                        $('#attendance-table').hide();
                     }
                 });
             }
         </script>
     {% else %}
         <div class="alert alert-warning">
-            <p>You must be an admin to view this page. Please <a href="{{ url_for('teacher.teacher_login') }}" class="alert-link">log in</a> as an admin.</p>
+            <p>You must be logged in as a teacher to view this page. Please <a href="{{ url_for('teacher.teacher_login') }}" class="alert-link">log in</a>.</p>
         </div>
     {% endif %}
 </div>

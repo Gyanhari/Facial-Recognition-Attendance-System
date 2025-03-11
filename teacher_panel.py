@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from flask_bcrypt import Bcrypt  # Import Bcrypt
+from flask_bcrypt import Bcrypt 
 import psycopg2
 from psycopg2 import Error
 import logging
@@ -154,7 +154,6 @@ def teacher_dashboard():
     return render_template('teacher/dashboard.html', periods=periods)
 
 
-# Function to initialize Bcrypt (called from app.py)
 def init_bcrypt(app):
     global bcrypt
     bcrypt = Bcrypt(app)

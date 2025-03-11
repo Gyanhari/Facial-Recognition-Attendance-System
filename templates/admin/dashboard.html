@@ -20,8 +20,8 @@
         <tr>
             <td>{{ loop.index }}</td>
             <td>{{ student[2] }} </td>
-            <td>{{ student[3] }}</td>
-            <td> {{ student[4] if student[4] else '' }}</td>
+            <td>{{ student[3] if student[3] else '' }}</td>
+            <td> {{ student[4] }}</td>
             <td>{{ student[1] }}</td>
         </tr>
         {% endfor %}

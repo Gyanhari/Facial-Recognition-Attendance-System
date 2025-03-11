@@ -21,7 +21,7 @@ import pandas as pd
 import logging
 from functools import wraps
 import pickle
-from flask_bcrypt import Bcrypt  # Add this import
+from flask_bcrypt import Bcrypt
 from teacher_panel import teacher_bp, init_bcrypt
 from admin_panel import admin_bp
 from teacher_panel import teacher_bp
@@ -47,7 +47,7 @@ logger.addHandler(console_handler)
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
-bcrypt = Bcrypt(app)  # Initialize Bcrypt with app
+bcrypt = Bcrypt(app) 
 init_bcrypt(app)
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(teacher_bp, url_prefix='/teacher')
@@ -98,7 +98,7 @@ num_classes = 0
 try:
     with open(os.path.join(EMBEDDINGS_DIR, 'label_encoder.pkl'), 'rb') as f:
         le = pickle.load(f)
-    class_names = list(le.classes_)  # Convert to list to avoid NumPy array issues
+    class_names = list(le.classes_)   
     num_classes = len(class_names)
     classifier = Classifier(num_classes).to(device)
     classifier.load_state_dict(torch.load(os.path.join(MODELS_DIR, 'best_classifier.pth'), map_location=device))
@@ -257,6 +257,7 @@ def is_screen_detected(frame, box, previous_detections=None):
 
     logger.debug(f"Indicator score: {indicator_score:.2f}, Consistent: {consistent_detection}, Indicators: {indicators}")
     return consistent_detection, previous_detections
+
 
 @app.route('/mark_attendance/<int:period_id>', methods=['POST'])
 def mark_attendance_route(period_id):
@@ -591,7 +592,6 @@ def course():
             connection.close()
 
     if request.method == 'POST':
-        # Existing POST logic unchanged, just ensure admin access
         course_option = request.form['course_option']
         start_time = request.form['start_time']
         period_date = request.form['period_date']
