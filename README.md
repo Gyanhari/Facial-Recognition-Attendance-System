@@ -30,7 +30,7 @@ Welcome to the **Facial Recognition Attendance System**, a Flask-based web appli
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Gyanhari/Seventh-Sem-Project.git
+git clone https://github.com/Gyanhari/Seventh-Sem-Project.git](https://github.com/Gyanhari/Facial-Recognition-Attendance-System.git
 cd Seventh-Sem-Project
 ```
 
